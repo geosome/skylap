@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Court Club — Monthly Leaderboard</title>
+<title>Skylap badminton — Monthly Leaderboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -626,7 +626,7 @@ input:focus, select:focus {
 <body>
 <header>
   <div class="logo">
-    Court Club
+    Skylap leaderboard
     <span>Monthly Standings</span>
   </div>
   <div class="header-right">
@@ -645,11 +645,11 @@ input:focus, select:focus {
     <div class="about-grid">
       <article class="about-item">
         <h3>Club name</h3>
-        <p>Court Club is the monthly badminton standings board for your club, built to track player scoring across matches and show who is leading each month.</p>
+        <p>Track player scoring across matches and see who is leading each month.</p>
       </article>
       <article class="about-item">
         <h3>How PPG works</h3>
-        <p>PPG means points per game. The app adds every point a player scores in the selected month, then divides that total by the number of games they played, so stronger average scoring rises to the top.</p>
+        <p>PPG means "points per game". We add every point a player scores in the selected month, then divide that total by the number of games they played. This is to prevent one bad day from ruining the entire score.</p>
       </article>
       <article class="about-item">
         <h3>What MGP means</h3>
@@ -657,7 +657,7 @@ input:focus, select:focus {
       </article>
       <article class="about-item">
         <h3>How rankings work</h3>
-        <p>Official rankings include only players who meet MGP, and they are sorted by highest PPG first. Players below the MGP threshold appear in the In Progress section until they qualify for the main board.</p>
+        <p>Official rankings include only players who meet MGP, and they are sorted by highest PPG first. Players below the MGP threshold appear in the <strong>In Progress</strong> section until they qualify for the main board.</p>
       </article>
     </div>
   </section>
@@ -675,7 +675,7 @@ input:focus, select:focus {
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="adminPassword" placeholder="Your Supabase password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="adminPassword" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div id="loginError" style="display:none;color:var(--red-bright);font-family:'Roboto Mono',monospace;font-size:0.75rem;margin-bottom:1rem;letter-spacing:0.05em;"></div>
     <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
