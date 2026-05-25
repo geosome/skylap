@@ -679,19 +679,16 @@
       Admin Access
       <button class="modal-close" onclick="closeOverlay('loginOverlay')">✕</button>
     </div>
-    <div class="config-note">
-      <strong>SETUP REQUIRED</strong><br>
-      Edit the CONFIG object at the top of this file with your:<br>
-      • Supabase Project URL<br>
-      • Supabase Anon Key<br>
-      • Admin Password (stored only in JS)<br><br>
-      See the SQL schema comment at the bottom of this file.
+    <div class="form-group">
+      <label>Email</label>
+      <input type="text" id="adminEmail" placeholder="admin@courtclub.com" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="adminPassword" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="adminPassword" placeholder="Your Supabase password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn btn-primary" onclick="doLogin()">Unlock Admin Panel</button>
+    <div id="loginError" style="display:none;color:var(--red);font-family:Share Tech Mono,monospace;font-size:0.75rem;margin-bottom:1rem;letter-spacing:0.05em;"></div>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
   </div>
 </div>
 
@@ -788,9 +785,7 @@
 const CONFIG = {
   supabaseUrl: 'https://jaghgbeaurkatqidvbbd.supabase.co',
   supabaseKey: 'sb_publishable_aZDKXRGF8MecJoItPStX_A_ZbstCTsz',
-  adminPassword: 'courtclub2024',
   mgpThreshold: 10,
-  courts: ['Court A', 'Court B'],
 };
 
 /*
@@ -841,10 +836,11 @@ const CONFIG = {
 // ============================================================
 const sb = {
   async query(path, opts = {}) {
+    const token = state?.accessToken || CONFIG.supabaseKey;
     const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/${path}`, {
       headers: {
         'apikey': CONFIG.supabaseKey,
-        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Prefer': opts.prefer || 'return=representation',
         ...opts.headers
@@ -870,6 +866,30 @@ const sb = {
 
   async delete(table, params) {
     return this.query(`${table}?${params}`, { method: 'DELETE', prefer: '' });
+  },
+
+  async signIn(email, password) {
+    const res = await fetch(`${CONFIG.supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+    return data;
+  },
+
+  async signOut(accessToken) {
+    await fetch(`${CONFIG.supabaseUrl}/auth/v1/logout`, {
+      method: 'POST',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
   }
 };
 
@@ -882,7 +902,7 @@ let state = {
   entries: [],
   selectedMonth: '',
   isAdmin: false,
-  playerRows: 5
+  accessToken: null,
 };
 
 // ============================================================
@@ -1104,21 +1124,52 @@ document.getElementById('adminBtn').addEventListener('click', () => {
     openAdminPanel();
   } else {
     openOverlay('loginOverlay');
-    setTimeout(() => document.getElementById('adminPassword').focus(), 200);
+    setTimeout(() => document.getElementById('adminEmail').focus(), 200);
   }
 });
 
-function doLogin() {
+document.getElementById('adminBtn').addEventListener('contextmenu', async (e) => {
+  if (!state.isAdmin) return;
+  e.preventDefault();
+  if (!confirm('Sign out of admin?')) return;
+  try { await sb.signOut(state.accessToken); } catch(_) {}
+  state.isAdmin = false;
+  state.accessToken = null;
+  document.getElementById('adminBtn').textContent = '⚙ Admin';
+});
+
+async function doLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
   const pw = document.getElementById('adminPassword').value;
-  if (pw === CONFIG.adminPassword) {
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!email || !pw) {
+    errEl.textContent = 'Enter your email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  errEl.style.display = 'none';
+
+  try {
+    const data = await sb.signIn(email, pw);
+    state.accessToken = data.access_token;
     state.isAdmin = true;
     closeOverlay('loginOverlay');
     document.getElementById('adminPassword').value = '';
+    document.getElementById('adminEmail').value = '';
     document.getElementById('adminBtn').textContent = '⚙ Admin ●';
     openAdminPanel();
-  } else {
-    showToast('Incorrect password', true);
+  } catch (e) {
+    errEl.textContent = e.message || 'Login failed. Check your credentials.';
+    errEl.style.display = 'block';
     document.getElementById('adminPassword').select();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
   }
 }
 
