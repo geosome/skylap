@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skylap — Monthly Leaderboard</title>
+<title>Court Club — Monthly Leaderboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -736,6 +736,112 @@
     margin: 1.25rem 0;
   }
 
+  /* FORM GUIDE */
+  .form-guide {
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .form-dot {
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  /* RIVALRY CARD */
+  .rivalry-card {
+    background: linear-gradient(135deg, #1a0000 0%, #0d0d0d 60%, #1a0000 100%);
+    border: 1px solid var(--espn-red);
+    border-left: 4px solid var(--espn-red);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rivalry-card::before {
+    content: 'THE RIVALRY';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Anton', sans-serif;
+    font-size: 4rem;
+    color: rgba(204,0,0,0.06);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .rivalry-label {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--espn-red);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .rivalry-names {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.6rem;
+    color: white;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .rivalry-vs {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--espn-red);
+    letter-spacing: 0.15em;
+  }
+
+  .rivalry-stats {
+    margin-top: 0.6rem;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* SHARE BUTTON */
+  .share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: #25D366;
+    color: white;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .share-btn:hover { background: #20ba57; }
+  .share-btn:active { background: #1a9e4a; transform: scale(0.98); }
+
+  /* SHARE CANVAS (hidden) */
+  #shareCanvas { display: none; }
+
   /* ABOUT SECTION */
   .about-section {
     padding: 2rem 0 4rem;
@@ -806,6 +912,8 @@
     .hero-title { font-size: 1.4rem; }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<canvas id="shareCanvas"></canvas>
 </head>
 <body>
 
@@ -826,7 +934,7 @@
     font-family:'Roboto Condensed',sans-serif;font-size:1rem;
     font-weight:700;letter-spacing:0.4em;text-transform:uppercase;
     color:var(--text-muted);margin-top:1rem;opacity:0;
-  ">Skylap leaderboard</div>
+  ">COURT CLUB</div>
 </div>
 
 <div class="ticker"></div>
@@ -849,7 +957,7 @@
       </svg>
     </div>
     <div class="logo">
-      Skylap
+      Court Club
       <span>Badminton · Monthly Standings</span>
     </div>
   </div>
@@ -876,15 +984,15 @@
   <!-- ABOUT PAGE -->
   <div id="page-about" class="page">
     <div class="hero-band">
-      <div class="hero-month">Skylap Badminton</div>
+      <div class="hero-month">Court Club Badminton</div>
       <div class="hero-title">How It Works</div>
     </div>
     <div class="about-section">
 
       <div class="section-label" style="margin-bottom:1rem;">The League</div>
       <div class="about-card">
-        <h3><span class="icon">01</span> What is this?</h3>
-        <p>This is a local badminton club tracking monthly standings across courts. Regular players compete in doubles matches each session, with standings updated after every game. A fresh leaderboard resets each month — keeping competition alive all year round.</p>
+        <h3><span class="icon">01</span> What is Court Club?</h3>
+        <p>Court Club is a friendly local badminton club tracking monthly standings across two courts. Up to 8 regular players compete in doubles matches each session, with standings updated after every game. A fresh leaderboard resets each month — keeping competition alive all year round.</p>
       </div>
 
       <div class="section-label" style="margin-bottom:1rem;margin-top:1.5rem;">Scoring System</div>
@@ -1389,14 +1497,55 @@ function computeStandings(month) {
     });
   });
 
-  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h };
+  // ── Last 5 form per player (all-time, most recent 5 matches) ──
+  const form5 = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') form5[p.id] = []; });
+
+  sortedMatchIds.slice().reverse().forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    if (entries.length < 2) return;
+    const scores = [...new Set(entries.map(e => e.points))];
+    if (scores.length < 2) return;
+    const maxScore = Math.max(...scores);
+    entries.forEach(e => {
+      if (!form5.hasOwnProperty(e.player_id)) return;
+      if (form5[e.player_id].length >= 5) return;
+      form5[e.player_id].push(e.points === maxScore ? 'W' : 'L');
+    });
+  });
+  all.forEach(s => { s.form = (form5[s.id] || []).reverse(); });
+
+  // ── Rivalry: pair who played each other most (all-time) ──
+  let rivalry = null;
+  let maxGames = 0;
+  const playerIds = state.players.filter(p => p.name !== 'Guest').map(p => p.id);
+  for (let i = 0; i < playerIds.length; i++) {
+    for (let j = i + 1; j < playerIds.length; j++) {
+      const a = playerIds[i], b = playerIds[j];
+      if (!h2h[a] || !h2h[a][b]) continue;
+      const games = (h2h[a][b].wins || 0) + (h2h[a][b].losses || 0);
+      if (games > maxGames) {
+        maxGames = games;
+        const nameA = state.players.find(p => p.id === a)?.name || '?';
+        const nameB = state.players.find(p => p.id === b)?.name || '?';
+        rivalry = {
+          nameA, nameB,
+          winsA: h2h[a][b].wins,
+          winsB: h2h[a][b].losses,
+          totalGames: games
+        };
+      }
+    }
+  }
+
+  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry };
 }
 
 // ============================================================
 // RENDER LEADERBOARD
 // ============================================================
 function renderLeaderboard() {
-  const { qualified, inProgress, totalMatches, mvpId, h2h } = computeStandings(state.selectedMonth);
+  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry } = computeStandings(state.selectedMonth);
   state.lastH2H = h2h;
   const totalPlayers = state.players.length;
   const totalGames = qualified.reduce((s, p) => s + p.games, 0) +
@@ -1479,6 +1628,7 @@ function renderLeaderboard() {
                 <td class="player-name" style="color:#ccc;">
                   ${escHtml(p.name)}
                   ${p.streak >= 3 ? `<span title="${p.streak} game win streak" style="margin-left:0.4rem;font-size:0.85rem;">🔥${p.streak}</span>` : ''}
+                  <span class="form-guide">${(p.form||[]).map(r => `<span class="form-dot">${r === 'W' ? '🔥' : '😢'}</span>`).join('')}</span>
                 </td>
                 <td class="ppg-cell" style="font-size:1.4rem;color:#aaa;">${p.days > 0 ? p.ppg.toFixed(2) : '—'}</td>
                 <td class="num" style="font-family:'Roboto Condensed',sans-serif;line-height:1.5;">
@@ -1502,11 +1652,40 @@ function renderLeaderboard() {
     heroEl.textContent = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
   }
 
+  // Share button
+  const shareHtml = `
+    <button class="share-btn" onclick="shareStandings()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.337 7.407c-1.523 0-2.764 1.24-2.764 2.763 0 .533.15 1.03.413 1.455l-.585 1.735 1.78-.467a2.754 2.754 0 001.156.254c1.523 0 2.764-1.24 2.764-2.764 0-1.523-1.241-2.763-2.764-2.763z" opacity="0"/><circle cx="19" cy="5" r="3" fill="#25D366" opacity="0"/></svg>
+      Share Standings on WhatsApp
+    </button>
+  `;
+
+  // Rivalry card
+  let rivalryHtml = '';
+  if (rivalry && rivalry.totalGames >= 3) {
+    rivalryHtml = `
+      <div class="rivalry-card">
+        <div class="rivalry-label">⚡ The Rivalry</div>
+        <div class="rivalry-names">
+          <span>${escHtml(rivalry.nameA)}</span>
+          <span class="rivalry-vs">VS</span>
+          <span>${escHtml(rivalry.nameB)}</span>
+        </div>
+        <div class="rivalry-stats">
+          ${rivalry.totalGames} matches played &nbsp;·&nbsp;
+          ${escHtml(rivalry.nameA)} leads ${rivalry.winsA}–${rivalry.winsB}
+        </div>
+      </div>
+    `;
+  }
+
   root.innerHTML = `
     ${statsHtml}
+    ${shareHtml}
     <div class="section-label">Official Rankings</div>
     ${qualHtml}
     ${ipHtml}
+    ${rivalryHtml}
   `;
 }
 
@@ -1775,6 +1954,102 @@ async function deleteMatch(id) {
     showToast('Match deleted');
   } catch (e) {
     showToast('Error deleting match', true);
+  }
+}
+
+// ============================================================
+// SHARE AS IMAGE
+// ============================================================
+async function shareStandings() {
+  const btn = document.querySelector('.share-btn');
+  if (btn) { btn.textContent = 'Generating image...'; btn.disabled = true; }
+
+  try {
+    // Build a clean off-screen div to capture
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `
+      position:fixed;left:-9999px;top:0;
+      width:420px;background:#0d0d0d;
+      font-family:'Roboto Condensed',sans-serif;
+      padding:0;overflow:hidden;
+    `;
+
+    const { qualified, inProgress } = computeStandings(state.selectedMonth);
+    const [yr, mo] = state.selectedMonth.split('-').map(Number);
+    const monthLabel = new Date(yr, mo-1, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' }).toUpperCase();
+
+    const rows = [...qualified, ...inProgress].slice(0, 10);
+
+    wrap.innerHTML = `
+      <div style="background:var(--espn-red,#cc0000);height:6px;"></div>
+      <div style="padding:1.2rem 1.4rem 0.8rem;border-bottom:2px solid #cc0000;">
+        <div style="color:#cc0000;font-size:0.62rem;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:0.2rem;">COURT CLUB · ${monthLabel}</div>
+        <div style="color:white;font-family:'Anton',sans-serif;font-size:1.6rem;letter-spacing:0.05em;text-transform:uppercase;">Player Standings</div>
+      </div>
+      <div style="padding:0.5rem 0;">
+        ${rows.map((p, i) => {
+          const isQual = qualified.includes(p);
+          const rank = isQual ? i + 1 : '—';
+          const rankColor = i === 0 ? '#f0c040' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#cc0000';
+          return `
+            <div style="display:flex;align-items:center;padding:0.6rem 1.4rem;border-bottom:1px solid #222;${i===0?'background:rgba(240,192,64,0.05);':''}">
+              <div style="width:2.2rem;font-family:'Anton',sans-serif;font-size:1.2rem;color:${rankColor};flex-shrink:0;">${rank}</div>
+              <div style="flex:1;color:${isQual?'white':'#aaa'};font-size:0.95rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                ${p.name}${p.streak>=3?' 🔥':''}
+              </div>
+              <div style="font-family:'Anton',sans-serif;font-size:1.3rem;color:${isQual?'white':'#888'};">${p.games>0?p.ppg.toFixed(2):'—'}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div style="padding:0.75rem 1.4rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #333;">
+        <div style="color:#555;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">PPG · Min ${CONFIG.mgpThreshold} days to qualify</div>
+        <div style="color:#cc0000;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;">COURT CLUB</div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    // Load fonts before capture
+    await document.fonts.ready;
+
+    const canvas = await html2canvas(wrap, {
+      backgroundColor: '#0d0d0d',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
+    document.body.removeChild(wrap);
+
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], 'court-club-standings.png', { type: 'image/png' });
+      const monthText = new Date(yr, mo-1, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+      // Try native share (mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `Court Club — ${monthText} Standings`,
+          text: `🏸 Court Club standings for ${monthText}`,
+          files: [file]
+        });
+      } else {
+        // Fallback: download the image
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'court-club-standings.png';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Image saved — share it on WhatsApp!');
+      }
+    }, 'image/png');
+
+  } catch (e) {
+    console.error(e);
+    showToast('Could not generate image', true);
+  } finally {
+    if (btn) { btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg> Share Standings on WhatsApp`; btn.disabled = false; }
   }
 }
 
