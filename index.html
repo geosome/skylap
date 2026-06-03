@@ -65,11 +65,12 @@
   .logo-icon {
     background: var(--espn-red);
     color: white;
-    font-family: 'Anton', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.05em;
-    padding: 0.3rem 0.6rem;
-    line-height: 1;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   .logo {
@@ -305,23 +306,25 @@
   tr[data-rank="1"] .rank-cell { color: var(--gold); }
   tr[data-rank="2"] .rank-cell { color: var(--silver); }
   tr[data-rank="3"] .rank-cell { color: var(--bronze); }
+  .rank-cell { color: var(--espn-red); }
 
-  tr[data-rank="1"] { background: rgba(240,192,64,0.04); }
+  tr[data-rank="1"] { background: rgba(240,192,64,0.05); }
 
   /* PLAYER NAME */
   .player-name {
     font-family: 'Roboto Condensed', sans-serif;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    color: white;
   }
 
   /* PPG CELL */
   .ppg-cell {
     font-family: 'Anton', sans-serif;
-    font-size: 1.5rem;
-    color: var(--espn-red);
+    font-size: 1.75rem;
+    color: white;
     text-align: right;
     letter-spacing: 0.02em;
   }
@@ -365,7 +368,7 @@
   }
 
   /* IN PROGRESS SECTION */
-  .in-progress-section { opacity: 0.65; }
+  .in-progress-section { opacity: 0.85; }
 
   .in-progress-label {
     font-family: 'Roboto Condensed', sans-serif;
@@ -806,11 +809,45 @@
 </head>
 <body>
 
+<!-- SPLASH SCREEN -->
+<div id="splash" style="
+  position:fixed;inset:0;background:#0d0d0d;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;overflow:hidden;
+">
+  <div id="splashOverlay" style="position:absolute;inset:0;background:var(--espn-red);opacity:0;pointer-events:none;"></div>
+  <div id="splashCount" style="
+    font-family:'Anton',sans-serif;font-size:clamp(6rem,20vw,12rem);
+    color:white;line-height:1;letter-spacing:-0.02em;
+    opacity:0;transform:scale(1.4);transition:none;
+    text-shadow:0 0 60px rgba(204,0,0,0.8);
+  ">3</div>
+  <div id="splashSub" style="
+    font-family:'Roboto Condensed',sans-serif;font-size:1rem;
+    font-weight:700;letter-spacing:0.4em;text-transform:uppercase;
+    color:var(--text-muted);margin-top:1rem;opacity:0;
+  ">Skylap leaderboard</div>
+</div>
+
 <div class="ticker"></div>
 
 <header>
   <div class="logo-wrap">
-    <div class="logo-icon">CC</div>
+    <div class="logo-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Shuttlecock: feathers on top, cork base -->
+        <ellipse cx="12" cy="17.5" rx="3" ry="2" fill="white" opacity="0.95"/>
+        <ellipse cx="12" cy="18.2" rx="2" ry="1.2" fill="#ffcccc"/>
+        <!-- Feather strands -->
+        <line x1="12" y1="15.5" x2="7" y2="5" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>
+        <line x1="12" y1="15.5" x2="9" y2="4" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>
+        <line x1="12" y1="15.5" x2="12" y2="3.5" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="12" y1="15.5" x2="15" y2="4" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>
+        <line x1="12" y1="15.5" x2="17" y2="5" stroke="white" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>
+        <!-- Feather ring connector -->
+        <path d="M7.5 6.5 Q12 8.5 16.5 6.5" stroke="white" stroke-width="0.8" fill="none" opacity="0.7"/>
+      </svg>
+    </div>
     <div class="logo">
       Skylap
       <span>Badminton · Monthly Standings</span>
@@ -846,8 +883,8 @@
 
       <div class="section-label" style="margin-bottom:1rem;">The League</div>
       <div class="about-card">
-        <h3><span class="icon">01</span> What is this about?</h3>
-        <p>This is a friendly local badminton club tracking monthly standings across two courts. Regular players compete in doubles matches each session, with standings updated after every game. A fresh leaderboard resets each month — keeping competition alive all year round.</p>
+        <h3><span class="icon">01</span> What is this?</h3>
+        <p>This is a local badminton club tracking monthly standings across courts. Regular players compete in doubles matches each session, with standings updated after every game. A fresh leaderboard resets each month — keeping competition alive all year round.</p>
       </div>
 
       <div class="section-label" style="margin-bottom:1rem;margin-top:1.5rem;">Scoring System</div>
@@ -866,8 +903,8 @@
       <div class="section-label" style="margin-bottom:1rem;margin-top:1.5rem;">Rankings Rules</div>
       <div class="about-card">
         <h3><span class="icon">04</span> Minimum Games Played (MGP)</h3>
-        <p>To appear in the <strong>Official Rankings</strong>, a player must have played at least <strong>10 games</strong> in the current month. This prevents players with very few games from holding a misleadingly high PPG average at the top of the table.</p>
-        <p style="margin-top:0.6rem;">Players who haven't yet reached 10 games appear in the <strong>In Progress</strong> section below the official standings, along with a progress bar showing how close they are to qualifying.</p>
+        <p>To appear in the <strong>Official Rankings</strong>, a player must have participated on at least <strong>15 distinct calendar days</strong> in the current month. This ensures only players who show up consistently are ranked — regardless of how many games they play per session.</p>
+        <p style="margin-top:0.6rem;">Players who haven't yet reached 15 days appear in the <strong>In Progress</strong> section below the official standings, showing their current day count toward qualification.</p>
       </div>
 
       <div class="about-card" style="margin-top:1rem;">
@@ -985,6 +1022,17 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- HEAD-TO-HEAD MODAL -->
+<div class="overlay" id="h2hOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">
+      <span>Head-to-Head</span>
+      <button class="modal-close" onclick="closeOverlay('h2hOverlay')">✕</button>
+    </div>
+    <div id="h2hContent"></div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // CONFIG — EDIT THESE VALUES
@@ -992,7 +1040,7 @@
 const CONFIG = {
   supabaseUrl: 'https://jaghgbeaurkatqidvbbd.supabase.co',
   supabaseKey: 'sb_publishable_aZDKXRGF8MecJoItPStX_A_ZbstCTsz',
-  mgpThreshold: 10,
+  mgpThreshold: 15, // minimum distinct days of participation
 };
 
 /*
@@ -1110,7 +1158,64 @@ let state = {
   selectedMonth: '',
   isAdmin: false,
   accessToken: null,
+  lastH2H: {},
 };
+
+// ============================================================
+// SPLASH SCREEN
+// ============================================================
+function runSplash(callback) {
+  const splash = document.getElementById('splash');
+  const countEl = document.getElementById('splashCount');
+  const subEl = document.getElementById('splashSub');
+  const overlay = document.getElementById('splashOverlay');
+
+  const counts = ['3', '2', '1', 'PLAY!'];
+  let i = 0;
+
+  function showCount() {
+    if (i >= counts.length) {
+      // Red flash then fade out
+      overlay.style.transition = 'opacity 0.15s';
+      overlay.style.opacity = '1';
+      setTimeout(() => {
+        overlay.style.transition = 'opacity 0.4s';
+        overlay.style.opacity = '0';
+        splash.style.transition = 'opacity 0.5s';
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+          callback();
+        }, 500);
+      }, 150);
+      return;
+    }
+
+    const isPlay = counts[i] === 'PLAY!';
+    countEl.style.transition = 'none';
+    countEl.style.opacity = '0';
+    countEl.style.transform = isPlay ? 'scale(0.7)' : 'scale(1.5)';
+    countEl.style.color = isPlay ? 'var(--espn-red)' : 'white';
+    countEl.textContent = counts[i];
+
+    subEl.style.opacity = i === 0 ? '1' : subEl.style.opacity;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        countEl.style.transition = 'opacity 0.2s ease, transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275)';
+        countEl.style.opacity = '1';
+        countEl.style.transform = 'scale(1)';
+        subEl.style.transition = 'opacity 0.4s';
+        subEl.style.opacity = '1';
+      });
+    });
+
+    i++;
+    setTimeout(showCount, isPlay ? 600 : 700);
+  }
+
+  showCount();
+}
 
 // ============================================================
 // INIT
@@ -1118,19 +1223,25 @@ let state = {
 async function init() {
   populateMonthSelector();
   await loadData();
-  renderLeaderboard();
+  runSplash(() => {
+    renderLeaderboard();
+  });
 }
 
 function populateMonthSelector() {
   const sel = document.getElementById('monthSelect');
   const now = new Date();
+  const currentVal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const label = i === 0
+      ? `${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} — LIVE`
+      : d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const opt = document.createElement('option');
     opt.value = val;
     opt.textContent = label;
+    if (i === 0) opt.style.fontWeight = 'bold';
     sel.appendChild(opt);
   }
   state.selectedMonth = sel.value;
@@ -1176,41 +1287,117 @@ function computeStandings(month) {
 
   const matchIds = new Set(monthMatches.map(m => m.id));
 
+  // Build a map of matchId -> played_on date
+  const matchDateMap = Object.fromEntries(monthMatches.map(m => [m.id, m.played_on]));
+
   // Aggregate per player — exclude Guest from leaderboard
   const stats = {};
   state.players.forEach(p => {
-    if (p.name === 'Guest') return; // Guest excluded from standings
-    stats[p.id] = { id: p.id, name: p.name, totalPoints: 0, games: 0 };
+    if (p.name === 'Guest') return;
+    stats[p.id] = { id: p.id, name: p.name, totalPoints: 0, games: 0, daysSet: new Set() };
   });
 
   state.entries.forEach(e => {
     if (!matchIds.has(e.match_id)) return;
-    if (!stats[e.player_id]) return; // Guest entries silently skipped
+    if (!stats[e.player_id]) return;
     stats[e.player_id].totalPoints += e.points;
     stats[e.player_id].games += 1;
+    stats[e.player_id].daysSet.add(matchDateMap[e.match_id]);
   });
 
   const all = Object.values(stats).map(s => ({
     ...s,
+    days: s.daysSet.size,
     ppg: s.games > 0 ? s.totalPoints / s.games : 0
   }));
 
+  // ── Win streaks: look at ALL-TIME match history per player ──
+  // For each player, sort their matches by date, track consecutive wins
+  // A "win" = player's team score > opponent team score in same match
+  // We identify teams by grouping entries per match into two score groups
+  const streaks = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') streaks[p.id] = 0; });
+
+  // Build match team groups from ALL matches (not just this month)
+  const allMatchIds = [...new Set(state.entries.map(e => e.match_id))];
+  // Sort matches by date ascending
+  const matchDateLookup = Object.fromEntries(state.matches.map(m => [m.id, m.played_on]));
+  const sortedMatchIds = allMatchIds
+    .filter(id => matchDateLookup[id])
+    .sort((a, b) => matchDateLookup[a] < matchDateLookup[b] ? -1 : 1);
+
+  // Per player, track running streak
+  const playerStreaks = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') playerStreaks[p.id] = 0; });
+
+  sortedMatchIds.forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    if (entries.length < 2) return;
+    const scores = [...new Set(entries.map(e => e.points))];
+    if (scores.length < 2) return;
+    const maxScore = Math.max(...scores);
+    const minScore = Math.min(...scores);
+    entries.forEach(e => {
+      if (!playerStreaks.hasOwnProperty(e.player_id)) return;
+      if (e.points === maxScore) {
+        playerStreaks[e.player_id] = (playerStreaks[e.player_id] || 0) + 1;
+      } else {
+        playerStreaks[e.player_id] = 0;
+      }
+    });
+  });
+
+  // Apply streaks to stats
+  all.forEach(s => { s.streak = playerStreaks[s.id] || 0; });
+
   const qualified = all
-    .filter(s => s.games >= CONFIG.mgpThreshold)
-    .sort((a, b) => b.ppg - a.ppg || b.games - a.games);
+    .filter(s => s.days >= CONFIG.mgpThreshold)
+    .sort((a, b) => b.ppg - a.ppg || b.days - a.days);
 
   const inProgress = all
-    .filter(s => s.games < CONFIG.mgpThreshold)
+    .filter(s => s.days < CONFIG.mgpThreshold)
     .sort((a, b) => b.ppg - a.ppg);
 
-  return { qualified, inProgress, totalMatches: monthMatches.length };
+  // MVP = highest PPG among qualified
+  const mvpId = qualified.length > 0 ? qualified[0].id : null;
+
+  // Head-to-head: build W/L map for ALL time
+  // h2h[playerA][playerB] = { wins, losses }
+  const h2h = {};
+  state.players.forEach(p => {
+    if (p.name === 'Guest') return;
+    h2h[p.id] = {};
+    state.players.forEach(q => {
+      if (q.name === 'Guest' || q.id === p.id) return;
+      h2h[p.id][q.id] = { wins: 0, losses: 0 };
+    });
+  });
+
+  sortedMatchIds.forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    if (entries.length < 2) return;
+    const scores = [...new Set(entries.map(e => e.points))];
+    if (scores.length < 2) return;
+    const maxScore = Math.max(...scores);
+    const winners = entries.filter(e => e.points === maxScore).map(e => e.player_id);
+    const losers = entries.filter(e => e.points !== maxScore).map(e => e.player_id);
+    winners.forEach(w => {
+      losers.forEach(l => {
+        if (h2h[w] && h2h[w][l]) h2h[w][l].wins++;
+        if (h2h[l] && h2h[l][w]) h2h[l][w].losses++;
+      });
+    });
+  });
+
+  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h };
 }
 
 // ============================================================
 // RENDER LEADERBOARD
 // ============================================================
 function renderLeaderboard() {
-  const { qualified, inProgress, totalMatches } = computeStandings(state.selectedMonth);
+  const { qualified, inProgress, totalMatches, mvpId, h2h } = computeStandings(state.selectedMonth);
+  state.lastH2H = h2h;
   const totalPlayers = state.players.length;
   const totalGames = qualified.reduce((s, p) => s + p.games, 0) +
                      inProgress.reduce((s, p) => s + p.games, 0);
@@ -1230,7 +1417,7 @@ function renderLeaderboard() {
       </div>
       <div class="stat-cell">
         <span class="stat-value">${CONFIG.mgpThreshold}</span>
-        <span class="stat-label">Min Games (MGP)</span>
+        <span class="stat-label">Min Days (MGP)</span>
       </div>
     </div>
   `;
@@ -1247,7 +1434,7 @@ function renderLeaderboard() {
             <th>#</th>
             <th>Player</th>
             <th class="num">PPG</th>
-            <th class="num">Games</th>
+            <th class="num">Participation</th>
             <th class="num">Points</th>
           </tr>
         </thead>
@@ -1257,15 +1444,11 @@ function renderLeaderboard() {
               <td class="rank-cell">${i+1}</td>
               <td class="player-name">${escHtml(p.name)}</td>
               <td class="ppg-cell">${p.ppg.toFixed(2)}</td>
-              <td class="num">
-                <div class="games-bar-wrap">
-                  <div class="games-bar">
-                    <div class="games-bar-fill" style="width:${Math.min(p.games/CONFIG.mgpThreshold,1)*100}%"></div>
-                  </div>
-                  <span class="games-count">${p.games}</span>
-                </div>
+              <td class="num" style="font-family:'Roboto Condensed',sans-serif;font-size:0.8rem;line-height:1.5;">
+                <span style="color:var(--text-dim);display:block;">${p.days} days</span>
+                <span style="color:var(--text-muted);font-size:0.72rem;">${p.games} games</span>
               </td>
-              <td class="num" style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:var(--text-dim)">${p.totalPoints}</td>
+              <td class="num" style="font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;color:var(--text-dim)">${p.totalPoints}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -1278,35 +1461,31 @@ function renderLeaderboard() {
   if (inProgress.length > 0) {
     ipHtml = `
       <div class="in-progress-section">
-        <div class="section-label">In Progress — fewer than ${CONFIG.mgpThreshold} games</div>
+        <div class="section-label">In Progress — fewer than ${CONFIG.mgpThreshold} days this month</div>
         <table class="board">
           <thead>
             <tr>
               <th>#</th>
               <th>Player</th>
               <th class="num">PPG</th>
-              <th class="num">Games</th>
+              <th class="num">Participation</th>
               <th class="num">Points</th>
             </tr>
           </thead>
           <tbody>
             ${inProgress.map((p, i) => `
-              <tr style="animation-delay:${(qualified.length+i)*0.06}s">
-                <td class="rank-cell" style="color:var(--text-muted);font-size:1rem">—</td>
-                <td class="player-name" style="color:var(--text-dim)">
+              <tr style="animation-delay:${(qualified.length+i)*0.06}s;cursor:pointer" onclick="showH2H('${p.id}', '${escHtml(p.name)}')" title="Click for head-to-head record">
+                <td class="rank-cell" style="font-size:1rem">—</td>
+                <td class="player-name" style="color:#ccc;">
                   ${escHtml(p.name)}
-                  <span class="in-progress-label">${p.games}/${CONFIG.mgpThreshold}</span>
+                  ${p.streak >= 3 ? `<span title="${p.streak} game win streak" style="margin-left:0.4rem;font-size:0.85rem;">🔥${p.streak}</span>` : ''}
                 </td>
-                <td class="ppg-cell">${p.games > 0 ? p.ppg.toFixed(2) : '—'}</td>
-                <td class="num">
-                  <div class="games-bar-wrap">
-                    <div class="games-bar">
-                      <div class="games-bar-fill" style="width:${(p.games/CONFIG.mgpThreshold)*100}%"></div>
-                    </div>
-                    <span class="games-count">${p.games}</span>
-                  </div>
+                <td class="ppg-cell" style="font-size:1.4rem;color:#aaa;">${p.days > 0 ? p.ppg.toFixed(2) : '—'}</td>
+                <td class="num" style="font-family:'Roboto Condensed',sans-serif;line-height:1.5;">
+                  <span style="color:var(--text-dim);display:block;">${p.days}/${CONFIG.mgpThreshold} days</span>
+                  <span style="color:var(--text-muted);font-size:0.72rem;">${p.games} games</span>
                 </td>
-                <td class="num" style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:var(--text-muted)">${p.totalPoints}</td>
+                <td class="num" style="font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;color:var(--text-muted)">${p.totalPoints}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -1597,6 +1776,58 @@ async function deleteMatch(id) {
   } catch (e) {
     showToast('Error deleting match', true);
   }
+}
+
+// ============================================================
+// HEAD-TO-HEAD
+// ============================================================
+function showH2H(playerId, playerName) {
+  const h2h = state.lastH2H;
+  if (!h2h || !h2h[playerId]) {
+    showToast('No head-to-head data available', true);
+    return;
+  }
+
+  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p.name]));
+  const records = Object.entries(h2h[playerId])
+    .map(([oppId, rec]) => ({ name: playerMap[oppId] || '?', ...rec }))
+    .filter(r => r.wins > 0 || r.losses > 0)
+    .sort((a, b) => b.wins - a.wins);
+
+  const el = document.getElementById('h2hContent');
+
+  if (records.length === 0) {
+    el.innerHTML = `<p style="color:var(--text-muted);font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;text-align:center;padding:1.5rem 0;">No recorded head-to-head matches yet.</p>`;
+  } else {
+    el.innerHTML = `
+      <p style="font-family:'Roboto Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1rem;">
+        All-time record for <span style="color:white;">${escHtml(playerName)}</span>
+      </p>
+      ${records.map(r => {
+        const total = r.wins + r.losses;
+        const winPct = Math.round((r.wins / total) * 100);
+        const barW = winPct;
+        return `
+          <div style="margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.3rem;">
+              <span style="font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:0.95rem;text-transform:uppercase;color:white;">${escHtml(r.name)}</span>
+              <span style="font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;color:var(--text-dim);">
+                <span style="color:#4caf50;font-weight:700;">${r.wins}W</span>
+                &nbsp;·&nbsp;
+                <span style="color:#f44336;font-weight:700;">${r.losses}L</span>
+                &nbsp;·&nbsp;${winPct}%
+              </span>
+            </div>
+            <div style="height:4px;background:var(--border);border-radius:0;">
+              <div style="width:${barW}%;height:100%;background:var(--espn-red);border-radius:0;transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    `;
+  }
+
+  openOverlay('h2hOverlay');
 }
 
 // ============================================================
