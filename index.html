@@ -1523,17 +1523,18 @@ function computeStandings(month) {
     for (let j = i + 1; j < playerIds.length; j++) {
       const a = playerIds[i], b = playerIds[j];
       if (!h2h[a] || !h2h[a][b]) continue;
-      const games = (h2h[a][b].wins || 0) + (h2h[a][b].losses || 0);
+      // h2h[a][b].wins = times a beat b; h2h[b][a].wins = times b beat a
+      const winsA = h2h[a][b].wins || 0;
+      const winsB = (h2h[b] && h2h[b][a]) ? (h2h[b][a].wins || 0) : 0;
+      const games = winsA + winsB;
       if (games > maxGames) {
         maxGames = games;
         const nameA = state.players.find(p => p.id === a)?.name || '?';
         const nameB = state.players.find(p => p.id === b)?.name || '?';
-        rivalry = {
-          nameA, nameB,
-          winsA: h2h[a][b].wins,
-          winsB: h2h[a][b].losses,
-          totalGames: games
-        };
+        const leader   = winsA > winsB ? nameA : winsB > winsA ? nameB : null;
+        const leaderW  = Math.max(winsA, winsB);
+        const trailerW = Math.min(winsA, winsB);
+        rivalry = { nameA, nameB, winsA, winsB, totalGames: games, leader, leaderW, trailerW };
       }
     }
   }
@@ -1673,7 +1674,9 @@ function renderLeaderboard() {
         </div>
         <div class="rivalry-stats">
           ${rivalry.totalGames} matches played &nbsp;·&nbsp;
-          ${escHtml(rivalry.nameA)} leads ${rivalry.winsA}–${rivalry.winsB}
+          ${rivalry.leader
+            ? `${escHtml(rivalry.leader)} leads ${rivalry.leaderW}–${rivalry.trailerW}`
+            : `All square ${rivalry.winsA}–${rivalry.winsB}`}
         </div>
       </div>
     `;
