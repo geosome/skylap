@@ -813,7 +813,12 @@
     letter-spacing: 0.05em;
   }
 
+
+  .rivalry-nav{display:flex;justify-content:center;gap:.5rem;margin-top:.8rem}
+  .rivalry-nav button{background:var(--surface2);border:1px solid var(--border);color:white;padding:.35rem .7rem;cursor:pointer}
+  .rivalry-rank{color:var(--espn-red);font-weight:700;letter-spacing:.15em;font-size:.75rem}
   /* SHARE BUTTON */
+
   .share-btn {
     display: flex;
     align-items: center;
@@ -1539,14 +1544,33 @@ function computeStandings(month) {
     }
   }
 
-  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry };
+  
+const rivalries=[];
+for (let i = 0; i < playerIds.length; i++) {
+  for (let j = i + 1; j < playerIds.length; j++) {
+    const a = playerIds[i], b = playerIds[j];
+    const winsA = h2h[a]?.[b]?.wins || 0;
+    const winsB = h2h[b]?.[a]?.wins || 0;
+    const games = winsA + winsB;
+    if(games>0){
+      rivalries.push({
+        nameA: state.players.find(p=>p.id===a)?.name || '?',
+        nameB: state.players.find(p=>p.id===b)?.name || '?',
+        winsA,winsB,totalGames:games
+      });
+    }
+  }
+}
+rivalries.sort((a,b)=>b.totalGames-a.totalGames);
+return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry, rivalries: rivalries.slice(0,3) };
+
 }
 
 // ============================================================
 // RENDER LEADERBOARD
 // ============================================================
 function renderLeaderboard() {
-  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry } = computeStandings(state.selectedMonth);
+  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry, rivalries } = computeStandings(state.selectedMonth);
   state.lastH2H = h2h;
   const totalPlayers = state.players.length;
   const totalGames = qualified.reduce((s, p) => s + p.games, 0) +
@@ -1663,23 +1687,16 @@ function renderLeaderboard() {
 
   // Rivalry card
   let rivalryHtml = '';
-  if (rivalry && rivalry.totalGames >= 3) {
+  if (rivalries && rivalries.length) {
     rivalryHtml = `
-      <div class="rivalry-card">
-        <div class="rivalry-label">⚡ The Rivalry</div>
-        <div class="rivalry-names">
-          <span>${escHtml(rivalry.nameA)}</span>
-          <span class="rivalry-vs">VS</span>
-          <span>${escHtml(rivalry.nameB)}</span>
-        </div>
-        <div class="rivalry-stats">
-          ${rivalry.totalGames} matches played &nbsp;·&nbsp;
-          ${rivalry.leader
-            ? `${escHtml(rivalry.leader)} leads ${rivalry.leaderW}–${rivalry.trailerW}`
-            : `All square ${rivalry.winsA}–${rivalry.winsB}`}
-        </div>
-      </div>
-    `;
+      <div class="rivalry-card" id="rivalryCard"></div>
+      <div class="rivalry-nav">
+        <button onclick="changeRivalry(-1)">◀</button>
+        <button onclick="changeRivalry(1)">▶</button>
+      </div>`;
+    window.topRivalries = rivalries;
+    window.rivalryIndex = 0;
+    setTimeout(renderRivalryCard,0);
   }
 
   root.innerHTML = `
@@ -1690,6 +1707,23 @@ function renderLeaderboard() {
     ${ipHtml}
     ${rivalryHtml}
   `;
+}
+
+
+function renderRivalryCard(){
+  const card=document.getElementById('rivalryCard');
+  if(!card || !window.topRivalries?.length) return;
+  const r=window.topRivalries[window.rivalryIndex];
+  card.innerHTML=`
+    <div class="rivalry-label">⚡ Top Rivalry</div>
+    <div class="rivalry-rank">#${window.rivalryIndex+1}</div>
+    <div class="rivalry-names"><span>${escHtml(r.nameA)}</span><span class="rivalry-vs">VS</span><span>${escHtml(r.nameB)}</span></div>
+    <div class="rivalry-stats">${r.totalGames} matches · ${r.winsA}-${r.winsB}</div>`;
+}
+function changeRivalry(dir){
+  if(!window.topRivalries?.length) return;
+  window.rivalryIndex=(window.rivalryIndex+dir+window.topRivalries.length)%window.topRivalries.length;
+  renderRivalryCard();
 }
 
 // ============================================================
@@ -2200,7 +2234,34 @@ function showH2H(playerId, playerName) {
   if (records.length === 0) {
     el.innerHTML = `<p style="color:var(--text-muted);font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;text-align:center;padding:1.5rem 0;">No recorded head-to-head matches yet.</p>`;
   } else {
+    
+    const standings = computeStandings(state.selectedMonth);
+    const allPlayers = [...standings.qualified, ...standings.inProgress];
+    const playerStats = allPlayers.find(p => p.id === playerId);
+
+    let headline = '🏸 Consistently competing';
+
+    const rank = standings.qualified.findIndex(p => p.id === playerId) + 1;
+    const leaderPPG = standings.qualified?.[0]?.ppg || 0;
+
+    if (rank === 1 && (playerStats?.streak || 0) >= 5) {
+      headline = '🔥 On the way to unstoppable';
+    } else if (rank === 1) {
+      headline = '👑 The player everyone is chasing';
+    } else if (rank > 1 && rank <= 3 && leaderPPG - (playerStats?.ppg || 0) <= 0.5) {
+      headline = '⚡ Closing in on the top spot';
+    } else if ((playerStats?.streak || 0) >= 3) {
+      headline = '🚀 Building momentum';
+    } else if (playerStats && (15 - (playerStats.days || 0)) <= 2 && (15 - (playerStats.days || 0)) > 0) {
+      headline = '🎯 Qualification within reach';
+    } else if (playerStats?.form) {
+      const losses = playerStats.form.filter(x => x === 'L').length;
+      if (losses >= 4) headline = '🔄 Looking to bounce back';
+    }
+
     el.innerHTML = `
+
+      <div style="background:#1a0000;border-left:3px solid var(--espn-red);padding:.8rem;margin-bottom:1rem;font-family:'Roboto Condensed',sans-serif;font-weight:700;">${headline}</div>
       <p style="font-family:'Roboto Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1rem;">
         All-time record for <span style="color:white;">${escHtml(playerName)}</span>
       </p>
