@@ -1816,17 +1816,28 @@ async function submitMatch() {
     showToast('Enter scores for both teams', true); return;
   }
 
-  const allSelected = [...teamA, ...teamB];
-  const uniquePlayers = new Set(allSelected);
-  if (uniquePlayers.size !== allSelected.length) {
+  // Allow multiple Guest slots — only block duplicate non-Guest players
+  const nonGuests = [...teamA, ...teamB].filter(pid => {
+    const p = state.players.find(x => x.id === pid);
+    return p && p.name !== 'Guest';
+  });
+  const uniqueNonGuests = new Set(nonGuests);
+  if (uniqueNonGuests.size !== nonGuests.length) {
     showToast('Same player selected twice', true); return;
   }
 
-  const scoreA = parseInt(ta_score);
-  const scoreB = parseInt(tb_score);
+  // CR-016: Cap scores at 21. If either score > 21, scale both down proportionally
+  // e.g. 22-20 → 21-19, 23-18 → 21-18 (winner always capped at 21)
+  let scoreA = parseInt(ta_score);
+  let scoreB = parseInt(tb_score);
+  const maxScore = Math.max(scoreA, scoreB);
+  if (maxScore > 21) {
+    const diff = maxScore - 21;
+    if (scoreA > scoreB) { scoreA = 21; scoreB = Math.max(0, scoreB - diff); }
+    else { scoreB = 21; scoreA = Math.max(0, scoreA - diff); }
+  }
 
   // Build entries — each player gets their team's score
-  // Guest players (name === 'Guest') are included in DB for history but flagged
   const entries = [
     ...teamA.map(pid => ({ player_id: pid, points: scoreA })),
     ...teamB.map(pid => ({ player_id: pid, points: scoreB }))
@@ -1927,18 +1938,28 @@ async function renderMatchHistory() {
 
   el.innerHTML = recentMatches.map(m => {
     const matchEntries = state.entries.filter(e => e.match_id === m.id);
-    const playerList = matchEntries
-      .sort((a, b) => b.points - a.points)
-      .map(e => `${playerMap[e.player_id] || '?'} (${e.points})`)
-      .join(' · ');
+    // Group into two teams by score
+    const scores = [...new Set(matchEntries.map(e => e.points))].sort((a,b) => b-a);
+    let playerList = '';
+    if (scores.length === 2) {
+      const teamA = matchEntries.filter(e => e.points === scores[0]);
+      const teamB = matchEntries.filter(e => e.points === scores[1]);
+      const nameList = t => t.map(e => playerMap[e.player_id] || '?').join(' & ');
+      playerList = `${nameList(teamA)} <span style="color:var(--espn-red);font-weight:700;">${scores[0]}</span> — <span style="color:var(--espn-red);font-weight:700;">${scores[1]}</span> ${nameList(teamB)}`;
+    } else {
+      playerList = matchEntries
+        .sort((a,b) => b.points - a.points)
+        .map(e => `${playerMap[e.player_id]||'?'} (${e.points})`).join(' · ');
+    }
 
     return `
       <div class="match-log-item">
-        <div>
+        <div style="flex:1;">
           <div class="match-log-players">${playerList || 'No entries'}</div>
+          <div class="match-log-date" style="margin-top:0.2rem;">${m.played_on}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span class="match-log-date">${m.played_on}</span>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+          <button class="btn btn-ghost" style="width:auto;font-size:0.7rem;padding:0.3rem 0.6rem;letter-spacing:0.05em;" onclick="openEditMatch('${m.id}')">✏ Edit</button>
           <button class="btn btn-danger" onclick="deleteMatch('${m.id}')">✕</button>
         </div>
       </div>
@@ -1957,6 +1978,122 @@ async function deleteMatch(id) {
     showToast('Match deleted');
   } catch (e) {
     showToast('Error deleting match', true);
+  }
+}
+
+// ── CR-014: Edit Match ──
+function openEditMatch(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+
+  const entries = state.entries.filter(e => e.match_id === matchId);
+  const scores = [...new Set(entries.map(e => e.points))].sort((a,b) => b-a);
+  const teamA = entries.filter(e => e.points === (scores[0] ?? 0));
+  const teamB = entries.filter(e => e.points === (scores[1] ?? 0));
+
+  const playerOpts = state.players.map(p =>
+    `<option value="${p.id}">${escHtml(p.name)}</option>`
+  ).join('');
+
+  const selWithVal = (id, val) => `
+    <select id="${id}">
+      <option value="">— Select —</option>
+      ${state.players.map(p =>
+        `<option value="${p.id}" ${p.id === val ? 'selected' : ''}>${escHtml(p.name)}</option>`
+      ).join('')}
+    </select>`;
+
+  const modal = document.createElement('div');
+  modal.className = 'overlay open';
+  modal.id = 'editMatchOverlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-title">
+        <span>Edit Match</span>
+        <button class="modal-close" onclick="document.getElementById('editMatchOverlay').remove()">✕</button>
+      </div>
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);margin-bottom:1rem;text-transform:uppercase;">
+        Date: ${match.played_on} &nbsp;·&nbsp; ${entries.length} players
+      </div>
+
+      <!-- TEAM A -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid var(--espn-red);padding:1rem;margin-bottom:0.75rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.75rem;">Team A</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.75rem;">
+          <div><div class="player-row-label">Player 1</div>${selWithVal('ep_ta1', teamA[0]?.player_id||'')}</div>
+          <div><div class="player-row-label">Player 2</div>${selWithVal('ep_ta2', teamA[1]?.player_id||'')}</div>
+        </div>
+        <div><div class="player-row-label">Team A Score</div>
+        <input type="number" id="ep_sa" min="0" max="99" value="${scores[0]??''}" style="width:100%;"></div>
+      </div>
+
+      <div style="text-align:center;font-family:'Anton',sans-serif;font-size:1rem;color:var(--text-muted);letter-spacing:0.2em;margin:0.4rem 0;">VS</div>
+
+      <!-- TEAM B -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid #4a9eff;padding:1rem;margin-bottom:1.25rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:#4a9eff;text-transform:uppercase;margin-bottom:0.75rem;">Team B</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.75rem;">
+          <div><div class="player-row-label">Player 1</div>${selWithVal('ep_tb1', teamB[0]?.player_id||'')}</div>
+          <div><div class="player-row-label">Player 2</div>${selWithVal('ep_tb2', teamB[1]?.player_id||'')}</div>
+        </div>
+        <div><div class="player-row-label">Team B Score</div>
+        <input type="number" id="ep_sb" min="0" max="99" value="${scores[1]??''}" style="width:100%;"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveEditMatch('${matchId}')">Save Changes</button>
+    </div>
+  `;
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function saveEditMatch(matchId) {
+  const ta1 = document.getElementById('ep_ta1').value;
+  const ta2 = document.getElementById('ep_ta2').value;
+  const tb1 = document.getElementById('ep_tb1').value;
+  const tb2 = document.getElementById('ep_tb2').value;
+  const saRaw = parseInt(document.getElementById('ep_sa').value);
+  const sbRaw = parseInt(document.getElementById('ep_sb').value);
+
+  const teamA = [ta1, ta2].filter(Boolean);
+  const teamB = [tb1, tb2].filter(Boolean);
+
+  if (teamA.length < 1 || teamB.length < 1) { showToast('Select at least 1 player per team', true); return; }
+  if (isNaN(saRaw) || isNaN(sbRaw)) { showToast('Enter valid scores', true); return; }
+
+  // Duplicate non-guest check
+  const nonGuests = [...teamA, ...teamB].filter(pid => {
+    const p = state.players.find(x => x.id === pid);
+    return p && p.name !== 'Guest';
+  });
+  if (new Set(nonGuests).size !== nonGuests.length) { showToast('Same player selected twice', true); return; }
+
+  // CR-016: Cap at 21
+  let sa = saRaw, sb = sbRaw;
+  const mx = Math.max(sa, sb);
+  if (mx > 21) {
+    const diff = mx - 21;
+    if (sa > sb) { sa = 21; sb = Math.max(0, sb - diff); }
+    else { sb = 21; sa = Math.max(0, sa - diff); }
+  }
+
+  const newEntries = [
+    ...teamA.map(pid => ({ player_id: pid, points: sa, match_id: matchId })),
+    ...teamB.map(pid => ({ player_id: pid, points: sb, match_id: matchId }))
+  ];
+
+  try {
+    await sb.delete('match_entries', `match_id=eq.${matchId}`);
+    await sb.post('match_entries', newEntries);
+    await loadData();
+    renderLeaderboard();
+    renderMatchHistory();
+    document.getElementById('editMatchOverlay')?.remove();
+    showToast('Match updated');
+  } catch (e) {
+    showToast('Error updating match', true);
+    console.error(e);
   }
 }
 
