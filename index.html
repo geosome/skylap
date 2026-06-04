@@ -1197,7 +1197,7 @@ const CONFIG = {
 // ============================================================
 // SUPABASE CLIENT
 // ============================================================
-const sb = {
+const supabase = {
   async query(path, opts = {}) {
     const token = state?.accessToken || CONFIG.supabaseKey;
     const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/${path}`, {
@@ -1362,17 +1362,17 @@ function populateMonthSelector() {
 async function loadData() {
   try {
     const [players, matches, entries] = await Promise.all([
-      sb.get('players', 'order=name'),
-      sb.get('matches', 'order=played_on.desc'),
-      sb.get('match_entries', 'select=*,player_id,match_id,points')
+      supabase.get('players', 'order=name'),
+      supabase.get('matches', 'order=played_on.desc'),
+      supabase.get('match_entries', 'select=*,player_id,match_id,points')
     ]);
     state.players = players;
     state.matches = matches;
     state.entries = entries;
     // Auto-seed Guest player if not present
     if (!players.find(p => p.name === 'Guest')) {
-      await sb.post('players', { name: 'Guest' });
-      const fresh = await sb.get('players', 'order=name');
+      await supabase.post('players', { name: 'Guest' });
+      const fresh = await supabase.get('players', 'order=name');
       state.players = fresh;
     }
   } catch (e) {
@@ -1721,7 +1721,7 @@ document.getElementById('adminBtn').addEventListener('contextmenu', async (e) =>
   if (!state.isAdmin) return;
   e.preventDefault();
   if (!confirm('Sign out of admin?')) return;
-  try { await sb.signOut(state.accessToken); } catch(_) {}
+  try { await supabase.signOut(state.accessToken); } catch(_) {}
   state.isAdmin = false;
   state.accessToken = null;
   document.getElementById('adminBtn').textContent = '⚙ Admin';
@@ -1744,7 +1744,7 @@ async function doLogin() {
   errEl.style.display = 'none';
 
   try {
-    const data = await sb.signIn(email, pw);
+    const data = await supabase.signIn(email, pw);
     state.accessToken = data.access_token;
     state.isAdmin = true;
     closeOverlay('loginOverlay');
@@ -1826,16 +1826,8 @@ async function submitMatch() {
     showToast('Same player selected twice', true); return;
   }
 
-  // CR-016: Cap scores at 21. If either score > 21, scale both down proportionally
-  // e.g. 22-20 → 21-19, 23-18 → 21-18 (winner always capped at 21)
-  let scoreA = parseInt(ta_score);
-  let scoreB = parseInt(tb_score);
-  const maxScore = Math.max(scoreA, scoreB);
-  if (maxScore > 21) {
-    const diff = maxScore - 21;
-    if (scoreA > scoreB) { scoreA = 21; scoreB = Math.max(0, scoreB - diff); }
-    else { scoreB = 21; scoreA = Math.max(0, scoreA - diff); }
-  }
+  const scoreA = parseInt(ta_score);
+  const scoreB = parseInt(tb_score);
 
   // Build entries — each player gets their team's score
   const entries = [
@@ -1848,8 +1840,8 @@ async function submitMatch() {
   btn.textContent = 'Saving...';
 
   try {
-    const [match] = await sb.post('matches', { played_on: date });
-    await sb.post('match_entries', entries.map(e => ({ ...e, match_id: match.id })));
+    const [match] = await supabase.post('matches', { played_on: date });
+    await supabase.post('match_entries', entries.map(e => ({ ...e, match_id: match.id })));
     await loadData();
     renderLeaderboard();
     // Reset selects
@@ -1897,7 +1889,7 @@ async function addPlayer() {
     showToast('Player already exists', true); return;
   }
   try {
-    await sb.post('players', { name });
+    await supabase.post('players', { name });
     await loadData();
     renderPlayerTags();
     populateTeamSelects();
@@ -1912,7 +1904,7 @@ async function addPlayer() {
 async function deletePlayer(id, name) {
   if (!confirm(`Remove ${name}? This will not delete their match history.`)) return;
   try {
-    await sb.delete('players', `id=eq.${id}`);
+    await supabase.delete('players', `id=eq.${id}`);
     await loadData();
     renderPlayerTags();
     renderPlayerRows();
@@ -1970,8 +1962,8 @@ async function renderMatchHistory() {
 async function deleteMatch(id) {
   if (!confirm('Delete this match? This cannot be undone.')) return;
   try {
-    await sb.delete('match_entries', `match_id=eq.${id}`);
-    await sb.delete('matches', `id=eq.${id}`);
+    await supabase.delete('match_entries', `match_id=eq.${id}`);
+    await supabase.delete('matches', `id=eq.${id}`);
     await loadData();
     renderLeaderboard();
     renderMatchHistory();
@@ -2069,23 +2061,17 @@ async function saveEditMatch(matchId) {
   });
   if (new Set(nonGuests).size !== nonGuests.length) { showToast('Same player selected twice', true); return; }
 
-  // CR-016: Cap at 21
-  let sa = saRaw, sb = sbRaw;
-  const mx = Math.max(sa, sb);
-  if (mx > 21) {
-    const diff = mx - 21;
-    if (sa > sb) { sa = 21; sb = Math.max(0, sb - diff); }
-    else { sb = 21; sa = Math.max(0, sa - diff); }
-  }
+  const scoreA = saRaw;
+  const scoreB = sbRaw;
 
   const newEntries = [
-    ...teamA.map(pid => ({ player_id: pid, points: sa, match_id: matchId })),
-    ...teamB.map(pid => ({ player_id: pid, points: sb, match_id: matchId }))
+    ...teamA.map(pid => ({ player_id: pid, points: scoreA, match_id: matchId })),
+    ...teamB.map(pid => ({ player_id: pid, points: scoreB, match_id: matchId }))
   ];
 
   try {
-    await sb.delete('match_entries', `match_id=eq.${matchId}`);
-    await sb.post('match_entries', newEntries);
+    await supabase.delete('match_entries', `match_id=eq.${matchId}`);
+    await supabase.post('match_entries', newEntries);
     await loadData();
     renderLeaderboard();
     renderMatchHistory();
