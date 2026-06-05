@@ -1358,6 +1358,11 @@
               <option value="3" selected>3 Courts</option>
             </select>
           </div>
+          <div style="flex:1;min-width:140px;">
+            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.35rem;">Number of Guests</div>
+            <input type="number" id="guestCount" min="0" step="1" value="0" style="width:100%;">
+            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;color:var(--text-muted);margin-top:0.35rem;letter-spacing:0.05em;">Guests are ranked L2 by default and included in fixture generation</div>
+          </div>
         </div>
       </div>
       <button class="btn btn-primary" style="margin-bottom:1rem;" onclick="generateFixtures()">⚡ Generate Fixtures</button>
@@ -2010,43 +2015,44 @@ function balanceTeams(pool, numCourts) {
 
 function generateFixtures() {
   const selected = state.players.filter(p => state.sessionPlayers.has(p.id));
+  const guestCount = Math.max(0, parseInt(document.getElementById('guestCount')?.value || 0, 10) || 0);
+  state.fixturesGuestCount = guestCount;
+  const guestPlayers = Array.from({ length: guestCount }, (_, i) => ({
+    id: `guest-${Date.now()}-${i}`,
+    name: `Guest ${i + 1}`,
+    skilllevel: 2,
+    isGuest: true,
+  }));
+  const selectedPool = [...selected, ...guestPlayers];
   const maxCourts = parseInt(document.getElementById('courtCount')?.value || 3);
 
-  if (selected.length < 4) {
-    showToast('Select at least 4 players', true); return;
+  if (selectedPool.length < 4) {
+    showToast('Need at least 4 total players including guests', true); return;
   }
 
-  const actualCourts = Math.min(maxCourts, Math.floor(selected.length / 4));
+  const actualCourts = Math.min(maxCourts, Math.floor(selectedPool.length / 4));
   const playersPerRound = actualCourts * 4;
-  const sittingPerRound = selected.length - playersPerRound;
+  const sittingPerRound = selectedPool.length - playersPerRound;
 
   if (actualCourts < maxCourts) {
-    showToast(`Only ${actualCourts} court${actualCourts>1?'s':''} possible with ${selected.length} players (need ${maxCourts*4} for ${maxCourts})`, false);
+    showToast(`Only ${actualCourts} court${actualCourts>1?'s':''} possible with ${selectedPool.length} players (need ${maxCourts*4} for ${maxCourts})`, false);
   }
 
-  // Calculate rounds needed so everyone plays equal times
-  // LCM-based: every player plays equal rounds
-  // Simple approach: enough rounds so total player-slots / players = integer
-  // rounds * playersPerRound must be divisible by selected.length
   const lcm = (a, b) => a * b / gcd(a, b);
   const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
   const totalRounds = sittingPerRound === 0
-    ? 6  // everyone plays every round, generate 6 rounds
-    : lcm(selected.length, playersPerRound) / playersPerRound;
+    ? 6
+    : lcm(selectedPool.length, playersPerRound) / playersPerRound;
 
-  // Cap at reasonable number
   const rounds = Math.min(Math.max(totalRounds, 4), 12);
 
-  // Generate all rounds with fair rotation
-  // Track play counts per player across rounds
   const playCounts = {};
-  selected.forEach(p => playCounts[p.id] = 0);
+  selectedPool.forEach(p => playCounts[p.id] = 0);
 
   const allRounds = [];
 
   for (let r = 0; r < rounds; r++) {
-    // Sort by play count ascending (least played gets priority), shuffle ties
-    const prioritised = shuffle(selected).sort((a, b) =>
+    const prioritised = shuffle(selectedPool).sort((a, b) =>
       (playCounts[a.id]||0) - (playCounts[b.id]||0)
     );
 
@@ -2055,18 +2061,32 @@ function generateFixtures() {
 
     playing.forEach(p => playCounts[p.id]++);
 
-    const fixtures = balanceTeams(playing, actualCourts);
-    allRounds.push({ roundNum: r + 1, fixtures, sittingOut });
+    const sorted = [...playing].sort((a, b) => (a.skilllevel || 2) - (b.skilllevel || 2));
+    const courts = [];
+
+    for (let c = 0; c < actualCourts; c++) {
+      const courtPlayers = sorted.slice(c * 4, c * 4 + 4);
+      if (courtPlayers.length === 4) {
+        courts.push({
+          court: c + 1,
+          teamA: [courtPlayers[0], courtPlayers[3]],
+          teamB: [courtPlayers[1], courtPlayers[2]],
+        });
+      }
+    }
+
+    allRounds.push({
+      round: r + 1,
+      courts,
+      sittingOut,
+    });
   }
 
   state.allRounds = allRounds;
-  state.roundNumber = rounds;
-
+  state.roundNumber = 0;
   renderAllRounds();
-  renderPublicAllRounds();
-  showToast(`${rounds} rounds generated for ${selected.length} players`);
+  showToast(`${rounds} rounds generated for ${selectedPool.length} players`);
 }
-
 function renderAllRounds() {
   const el = document.getElementById('adminFixtureRoot');
   if (!el || !state.allRounds) return;
