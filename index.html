@@ -2377,21 +2377,54 @@ async function submitMatch() {
 function renderPlayerTags() {
   const el = document.getElementById('playerTagsList');
   if (state.players.length === 0) {
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;font-family:Share Tech Mono,monospace;">No players added yet.</p>';
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;font-family:Roboto Condensed,sans-serif;">No players added yet.</p>';
     return;
   }
+  const skillColors = { 1: '#2196f3', 2: '#ff9800', 3: '#cc0000' };
+  const skillLabels = { 1: 'L1', 2: 'L2', 3: 'L3' };
+
   el.innerHTML = state.players.map(p => {
     const isGuest = p.name === 'Guest';
+    const skill = p.skill_level || 2;
+    const skillBadge = `<span style="background:${skillColors[skill]};color:white;font-size:0.6rem;padding:0.1rem 0.35rem;font-weight:700;border-radius:2px;flex-shrink:0;">${skillLabels[skill]}</span>`;
+
+    const controls = isGuest
+      ? `<span style="font-size:0.6rem;color:#a06c10;letter-spacing:0.1em;flex-shrink:0;">GUEST</span>`
+      : `<select
+           onchange="updatePlayerSkill('${p.id}', this.value)"
+           title="Change skill level"
+           style="background:#0d0d0d;border:1px solid #444;color:#ccc;font-size:0.7rem;font-family:'Roboto Condensed',sans-serif;font-weight:700;padding:0.15rem 0.3rem;cursor:pointer;flex-shrink:0;">
+           <option value="1" ${skill===1?'selected':''}>L1</option>
+           <option value="2" ${skill===2?'selected':''}>L2</option>
+           <option value="3" ${skill===3?'selected':''}>L3</option>
+         </select>
+         <button onclick="deletePlayer('${p.id}', '${escHtml(p.name)}')" title="Remove" style="flex-shrink:0;">✕</button>`;
+
     return `
-      <span class="player-tag" style="${isGuest ? 'border-color:var(--amber-dim);' : ''}">
+      <span class="player-tag" style="display:inline-flex;align-items:center;gap:0.4rem;${isGuest?'border-color:#a06c10;':''}">
+        ${skillBadge}
         ${escHtml(p.name)}
-        ${isGuest
-          ? '<span style="font-size:0.6rem;color:var(--amber-dim);letter-spacing:0.1em;">GUEST</span>'
-          : `<button onclick="deletePlayer('${p.id}', '${escHtml(p.name)}')" title="Remove">✕</button>`
-        }
+        ${controls}
       </span>
     `;
   }).join('');
+}
+
+async function updatePlayerSkill(id, skill) {
+  try {
+    await supabase.query(`players?id=eq.${id}`, {
+      method: 'PATCH',
+      body: { skill_level: parseInt(skill) },
+      prefer: 'return=minimal'
+    });
+    await loadData();
+    renderPlayerTags();
+    renderAdminChips();
+    showToast('Skill level updated');
+  } catch(e) {
+    showToast('Error updating skill level', true);
+    console.error(e);
+  }
 }
 
 async function addPlayer() {
