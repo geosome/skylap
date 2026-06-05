@@ -1513,7 +1513,7 @@ let state = {
   // Fixture state
   sessionPlayers: new Set(),   // player IDs present today
   sitOutCounts: {},            // player ID -> times sat out this session
-  currentFixtures: [],         // current round fixture data
+  allRounds: [],               // full day schedule
   roundNumber: 0,
 };
 
@@ -1975,167 +1975,229 @@ function toggleSessionPlayer(id) {
   renderAdminChips();
 }
 
-function generateFixtures() {
-  const selected = state.players.filter(p => state.sessionPlayers.has(p.id));
-  const courts = parseInt(document.getElementById('courtCount')?.value || 3);
+// ── FIXTURE ENGINE: Full day schedule ──
 
-  if (selected.length < 2) {
-    showToast('Select at least 2 players', true); return;
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-
-  const needed = courts * 4;
-  const playingCount = Math.min(selected.length, needed);
-  const actualCourts = Math.floor(playingCount / 4);
-
-  if (actualCourts < 1) {
-    showToast('Need at least 4 players for 1 court', true); return;
-  }
-
-  // Sort by sit-out count (most sits out first = highest priority to play)
-  const sorted = [...selected].sort((a, b) => {
-    const sitA = state.sitOutCounts[a.id] || 0;
-    const sitB = state.sitOutCounts[b.id] || 0;
-    return sitB - sitA; // most sit-outs gets priority
-  });
-
-  // Pick players for this round (prioritise those who sat out most)
-  const playing = sorted.slice(0, actualCourts * 4);
-  const sittingOut = sorted.slice(actualCourts * 4);
-
-  // Update sit-out counts for those sitting out
-  sittingOut.forEach(p => {
-    state.sitOutCounts[p.id] = (state.sitOutCounts[p.id] || 0) + 1;
-  });
-
-  // Skill-balanced fixture generation
-  // Rule: if a team has L1+L3, opponent must also have L1+L3
-  // Sort playing by skill descending for pairing
-  const fixtures = balanceTeams(playing, actualCourts);
-  state.currentFixtures = fixtures;
-  state.roundNumber++;
-
-  renderFixtures(fixtures, sittingOut, actualCourts);
-  renderPublicFixtures(fixtures, sittingOut);
-  showToast(`Round ${state.roundNumber} fixtures generated`);
+  return a;
 }
 
-function balanceTeams(players, courts) {
-  // Group by skill level
-  const bySkill = { 1: [], 2: [], 3: [] };
-  players.forEach(p => {
-    const s = p.skill_level || 2;
-    bySkill[s].push(p);
+function balanceTeams(pool, numCourts) {
+  // Sort by skill descending, shuffle within same skill for variety
+  const sorted = [...pool].sort((a, b) => {
+    const diff = (b.skill_level||2) - (a.skill_level||2);
+    return diff !== 0 ? diff : Math.random() - 0.5;
   });
 
-  // Shuffle within each skill group
-  [1,2,3].forEach(s => bySkill[s].sort(() => Math.random() - 0.5));
-
   const fixtures = [];
-  const pool = [...players].sort((a,b) => (b.skill_level||2) - (a.skill_level||2));
+  const available = [...sorted];
 
-  // Greedy balanced pairing:
-  // Take highest skill, pair with lowest available → Team A
-  // Take next highest, pair with next lowest → Team B
-  // This ensures each team has a spread
-
-  const available = [...pool];
-  for (let c = 0; c < courts; c++) {
+  for (let c = 0; c < numCourts; c++) {
     if (available.length < 4) break;
-
-    // Pick top + bottom for Team A
-    const p1 = available.shift(); // highest skill
-    const p4 = available.pop();   // lowest skill
-    // Pick next top + bottom for Team B
+    // Top + bottom → Team A; next top + next bottom → Team B
+    const p1 = available.shift();
+    const p4 = available.pop();
     const p2 = available.shift();
     const p3 = available.pop();
-
-    // Validate skill balance rule:
-    // If team has L1+L3 combo, opponent should too
-    // Otherwise swap to balance
-    const teamA = [p1, p4];
-    const teamB = [p2, p3];
-
-    fixtures.push({ court: c + 1, teamA, teamB });
+    fixtures.push({ court: c + 1, teamA: [p1, p4], teamB: [p2, p3], logged: false });
   }
-
   return fixtures;
 }
 
-function renderFixtures(fixtures, sittingOut, courts) {
+function generateFixtures() {
+  const selected = state.players.filter(p => state.sessionPlayers.has(p.id));
+  const maxCourts = parseInt(document.getElementById('courtCount')?.value || 3);
+
+  if (selected.length < 4) {
+    showToast('Select at least 4 players', true); return;
+  }
+
+  const actualCourts = Math.min(maxCourts, Math.floor(selected.length / 4));
+  const playersPerRound = actualCourts * 4;
+  const sittingPerRound = selected.length - playersPerRound;
+
+  if (actualCourts < maxCourts) {
+    showToast(`Only ${actualCourts} court${actualCourts>1?'s':''} possible with ${selected.length} players (need ${maxCourts*4} for ${maxCourts})`, false);
+  }
+
+  // Calculate rounds needed so everyone plays equal times
+  // LCM-based: every player plays equal rounds
+  // Simple approach: enough rounds so total player-slots / players = integer
+  // rounds * playersPerRound must be divisible by selected.length
+  const lcm = (a, b) => a * b / gcd(a, b);
+  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+  const totalRounds = sittingPerRound === 0
+    ? 6  // everyone plays every round, generate 6 rounds
+    : lcm(selected.length, playersPerRound) / playersPerRound;
+
+  // Cap at reasonable number
+  const rounds = Math.min(Math.max(totalRounds, 4), 12);
+
+  // Generate all rounds with fair rotation
+  // Track play counts per player across rounds
+  const playCounts = {};
+  selected.forEach(p => playCounts[p.id] = 0);
+
+  const allRounds = [];
+
+  for (let r = 0; r < rounds; r++) {
+    // Sort by play count ascending (least played gets priority), shuffle ties
+    const prioritised = shuffle(selected).sort((a, b) =>
+      (playCounts[a.id]||0) - (playCounts[b.id]||0)
+    );
+
+    const playing = prioritised.slice(0, playersPerRound);
+    const sittingOut = prioritised.slice(playersPerRound);
+
+    playing.forEach(p => playCounts[p.id]++);
+
+    const fixtures = balanceTeams(playing, actualCourts);
+    allRounds.push({ roundNum: r + 1, fixtures, sittingOut });
+  }
+
+  state.allRounds = allRounds;
+  state.roundNumber = rounds;
+
+  renderAllRounds();
+  renderPublicAllRounds();
+  showToast(`${rounds} rounds generated for ${selected.length} players`);
+}
+
+function renderAllRounds() {
   const el = document.getElementById('adminFixtureRoot');
-  if (!el) return;
+  if (!el || !state.allRounds) return;
 
   const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
   const skillClass = {1:'skill-1', 2:'skill-2', 3:'skill-3'};
 
-  const courtCards = fixtures.map(f => {
-    const teamName = t => t.map(p =>
-      `${escHtml(p.name)}<span class="skill-pill ${skillClass[p.skill_level||2]}">${skillLabels[p.skill_level||2]}</span>`
-    ).join('<br>');
+  el.innerHTML = state.allRounds.map((round, ri) => {
+    const isFirst = ri === 0;
+    const allLogged = round.fixtures.every(f => f.logged);
+    const status = allLogged ? '✓ DONE' : '';
+
+    const courtCards = round.fixtures.map((f, fi) => {
+      const teamName = t => t.map(p =>
+        `${escHtml(p.name)}<span class="skill-pill ${skillClass[p.skill_level||2]}">${skillLabels[p.skill_level||2]}</span>`
+      ).join('<br>');
+
+      const loggedBadge = f.logged
+        ? `<span style="color:#4caf50;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;">✓ LOGGED</span>`
+        : `<button class="fixture-log-btn" onclick="openFixtureLog(${ri}, ${fi})">Log Result</button>`;
+
+      return `
+        <div class="court-card" style="${f.logged ? 'opacity:0.5;' : ''}">
+          <div class="court-header">
+            <span>Court ${f.court}</span>
+            ${loggedBadge}
+          </div>
+          <div class="court-match">
+            <div class="court-team">${teamName(f.teamA)}</div>
+            <div class="court-vs">VS</div>
+            <div class="court-team" style="text-align:right;">${teamName(f.teamB)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const sitOut = round.sittingOut.length > 0
+      ? `<div class="sit-out-row">⏳ Sitting out: ${round.sittingOut.map(p => escHtml(p.name)).join(', ')}</div>`
+      : '';
 
     return `
-      <div class="court-card">
-        <div class="court-header">
-          <span>Court ${f.court}</span>
-          <button class="fixture-log-btn" onclick="openFixtureLog(${f.court-1})">Log Result</button>
+      <div class="round-block" style="margin-bottom:0.5rem;border:1px solid var(--border);">
+        <div onclick="toggleRound(${ri})" style="
+          display:flex;justify-content:space-between;align-items:center;
+          padding:0.75rem 1rem;cursor:pointer;
+          background:${allLogged ? '#111' : '#1a0000'};
+          border-left:3px solid ${allLogged ? '#4caf50' : 'var(--espn-red)'};
+        ">
+          <span style="font-family:'Anton',sans-serif;font-size:0.95rem;letter-spacing:0.08em;color:${allLogged?'#4caf50':'white'};">
+            ROUND ${round.roundNum} ${status}
+          </span>
+          <span id="round-chevron-${ri}" style="color:var(--text-muted);font-size:0.8rem;">${isFirst ? '▲' : '▼'}</span>
         </div>
-        <div class="court-match">
-          <div class="court-team">${teamName(f.teamA)}</div>
-          <div class="court-vs">VS</div>
-          <div class="court-team" style="text-align:right;">${teamName(f.teamB)}</div>
+        <div id="round-body-${ri}" style="display:${isFirst ? 'block' : 'none'};">
+          ${courtCards}
+          ${sitOut}
         </div>
       </div>
     `;
   }).join('');
-
-  const sitOutHtml = sittingOut.length > 0
-    ? `<div class="sit-out-row">⏳ Sitting out: ${sittingOut.map(p => escHtml(p.name)).join(', ')}</div>`
-    : '';
-
-  el.innerHTML = `
-    <div class="round-header">
-      <div class="round-label">Round ${state.roundNumber}</div>
-      <button class="btn-generate" onclick="generateFixtures()">↻ Next Round</button>
-    </div>
-    ${courtCards}
-    ${sitOutHtml}
-  `;
 }
 
-function renderPublicFixtures(fixtures, sittingOut) {
+function toggleRound(ri) {
+  const body = document.getElementById(`round-body-${ri}`);
+  const chev = document.getElementById(`round-chevron-${ri}`);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (chev) chev.textContent = open ? '▼' : '▲';
+}
+
+function renderPublicAllRounds() {
   const el = document.getElementById('publicFixtureRoot');
-  if (!el) return;
+  if (!el || !state.allRounds) return;
 
-  const courtCards = fixtures.map(f => {
-    const teamName = t => t.map(p => escHtml(p.name)).join('<br>');
+  el.innerHTML = state.allRounds.map((round, ri) => {
+    const allLogged = round.fixtures.every(f => f.logged);
+    const isFirst = ri === 0;
+
+    const courtCards = round.fixtures.map(f => {
+      const teamName = t => t.map(p => escHtml(p.name)).join('<br>');
+      return `
+        <div class="court-card" style="${f.logged ? 'opacity:0.4;' : ''}">
+          <div class="court-header">Court ${f.court}${f.logged ? ' ✓' : ''}</div>
+          <div class="court-match">
+            <div class="court-team">${teamName(f.teamA)}</div>
+            <div class="court-vs">VS</div>
+            <div class="court-team" style="text-align:right;">${teamName(f.teamB)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const sitOut = round.sittingOut.length > 0
+      ? `<div class="sit-out-row">⏳ Sitting out: ${round.sittingOut.map(p => escHtml(p.name)).join(', ')}</div>`
+      : '';
 
     return `
-      <div class="court-card">
-        <div class="court-header">Court ${f.court}</div>
-        <div class="court-match">
-          <div class="court-team">${teamName(f.teamA)}</div>
-          <div class="court-vs">VS</div>
-          <div class="court-team" style="text-align:right;">${teamName(f.teamB)}</div>
+      <div style="margin-bottom:0.5rem;border:1px solid var(--border);">
+        <div onclick="togglePublicRound(${ri})" style="
+          display:flex;justify-content:space-between;align-items:center;
+          padding:0.75rem 1rem;cursor:pointer;
+          background:${allLogged ? '#111' : '#0d0d0d'};
+          border-left:3px solid ${allLogged ? '#4caf50' : 'var(--espn-red)'};
+        ">
+          <span style="font-family:'Anton',sans-serif;font-size:0.9rem;letter-spacing:0.08em;color:${allLogged?'#555':'white'};">
+            ROUND ${round.roundNum}${allLogged ? ' — DONE' : ''}
+          </span>
+          <span id="pub-round-chevron-${ri}" style="color:var(--text-muted);font-size:0.8rem;">${isFirst ? '▲' : '▼'}</span>
+        </div>
+        <div id="pub-round-body-${ri}" style="display:${isFirst ? 'block' : 'none'};">
+          ${courtCards}
+          ${sitOut}
         </div>
       </div>
     `;
   }).join('');
-
-  const sitOutHtml = sittingOut.length > 0
-    ? `<div class="sit-out-row">⏳ Sitting out this round: ${sittingOut.map(p => escHtml(p.name)).join(', ')}</div>`
-    : '';
-
-  el.innerHTML = `
-    <div style="margin:1.5rem 0 0.75rem;">
-      <div class="section-label">Round ${state.roundNumber}</div>
-    </div>
-    ${courtCards}
-    ${sitOutHtml}
-  `;
 }
 
-function openFixtureLog(fixtureIndex) {
-  const f = state.currentFixtures[fixtureIndex];
+function togglePublicRound(ri) {
+  const body = document.getElementById(`pub-round-body-${ri}`);
+  const chev = document.getElementById(`pub-round-chevron-${ri}`);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (chev) chev.textContent = open ? '▼' : '▲';
+}
+
+function openFixtureLog(roundIndex, fixtureIndex) {
+  const round = state.allRounds?.[roundIndex];
+  const f = round?.fixtures?.[fixtureIndex];
   if (!f) return;
 
   const modal = document.createElement('div');
@@ -2144,31 +2206,30 @@ function openFixtureLog(fixtureIndex) {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const teamOpts = (team, prefix) => team.map((p, i) => `
-    <input type="hidden" id="${prefix}_p${i}" value="${p.id}">
-    <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;font-weight:700;color:white;text-transform:uppercase;">${escHtml(p.name)}</div>
-  `).join('');
+  const teamOpts = (team) => team.map(p =>
+    `<div style="font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;font-weight:700;color:white;text-transform:uppercase;">${escHtml(p.name)}</div>`
+  ).join('');
 
   modal.innerHTML = `
     <div class="modal" style="max-width:400px;">
       <div class="modal-title">
-        <span>Log Court ${f.court}</span>
+        <span>Round ${round.roundNum} · Court ${f.court}</span>
         <button class="modal-close" onclick="document.getElementById('fixtureLogOverlay').remove()">✕</button>
       </div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid var(--espn-red);padding:1rem;margin-bottom:0.75rem;">
         <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.5rem;">Team A</div>
-        ${teamOpts(f.teamA, 'fl_ta')}
-        <div style="margin-top:0.5rem;"><div class="player-row-label">Score</div>
+        ${teamOpts(f.teamA)}
+        <div style="margin-top:0.6rem;"><div class="player-row-label">Score</div>
         <input type="number" id="fl_sa" min="0" max="99" placeholder="e.g. 21" style="width:100%;"></div>
       </div>
       <div style="text-align:center;font-family:'Anton',sans-serif;font-size:1rem;color:var(--text-muted);letter-spacing:0.2em;margin:0.3rem 0;">VS</div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid #4a9eff;padding:1rem;margin-bottom:1.25rem;">
         <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:#4a9eff;text-transform:uppercase;margin-bottom:0.5rem;">Team B</div>
-        ${teamOpts(f.teamB, 'fl_tb')}
-        <div style="margin-top:0.5rem;"><div class="player-row-label">Score</div>
+        ${teamOpts(f.teamB)}
+        <div style="margin-top:0.6rem;"><div class="player-row-label">Score</div>
         <input type="number" id="fl_sb" min="0" max="99" placeholder="e.g. 19" style="width:100%;"></div>
       </div>
-      <button class="btn btn-primary" onclick="saveFixtureResult(${fixtureIndex}, '${today}')">Save Result</button>
+      <button class="btn btn-primary" onclick="saveFixtureResult(${roundIndex}, ${fixtureIndex}, '${today}')">Save Result</button>
     </div>
   `;
 
@@ -2176,28 +2237,34 @@ function openFixtureLog(fixtureIndex) {
   document.body.appendChild(modal);
 }
 
-async function saveFixtureResult(fixtureIndex, date) {
-  const f = state.currentFixtures[fixtureIndex];
+async function saveFixtureResult(roundIndex, fixtureIndex, date) {
+  const round = state.allRounds?.[roundIndex];
+  const f = round?.fixtures?.[fixtureIndex];
+  if (!f) return;
+
   const saRaw = parseInt(document.getElementById('fl_sa').value);
   const sbRaw = parseInt(document.getElementById('fl_sb').value);
 
   if (isNaN(saRaw) || isNaN(sbRaw)) { showToast('Enter both scores', true); return; }
 
-  const teamA = f.teamA.map(p => p.id);
-  const teamB = f.teamB.map(p => p.id);
-
   const entries = [
-    ...teamA.map(pid => ({ player_id: pid, points: saRaw })),
-    ...teamB.map(pid => ({ player_id: pid, points: sbRaw }))
+    ...f.teamA.map(p => ({ player_id: p.id, points: saRaw })),
+    ...f.teamB.map(p => ({ player_id: p.id, points: sbRaw }))
   ];
 
   try {
     const [match] = await supabase.post('matches', { played_on: date });
     await supabase.post('match_entries', entries.map(e => ({ ...e, match_id: match.id })));
+
+    // Mark as logged
+    state.allRounds[roundIndex].fixtures[fixtureIndex].logged = true;
+
     await loadData();
     renderLeaderboard();
+    renderAllRounds();
+    renderPublicAllRounds();
     document.getElementById('fixtureLogOverlay')?.remove();
-    showToast(`Court ${f.court} result saved`);
+    showToast(`Round ${round.roundNum} · Court ${f.court} saved`);
   } catch(e) {
     showToast('Error saving result', true);
     console.error(e);
