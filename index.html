@@ -813,12 +813,7 @@
     letter-spacing: 0.05em;
   }
 
-
-  .rivalry-nav{display:flex;justify-content:center;gap:.5rem;margin-top:.8rem}
-  .rivalry-nav button{background:var(--surface2);border:1px solid var(--border);color:white;padding:.35rem .7rem;cursor:pointer}
-  .rivalry-rank{color:var(--espn-red);font-weight:700;letter-spacing:.15em;font-size:.75rem}
   /* SHARE BUTTON */
-
   .share-btn {
     display: flex;
     align-items: center;
@@ -846,6 +841,207 @@
 
   /* SHARE CANVAS (hidden) */
   #shareCanvas { display: none; }
+
+  /* FIXTURE PAGE */
+  .fixture-page { padding: 0 0 4rem; }
+
+  .session-controls {
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--espn-red);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .player-select-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .player-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .player-chip.selected {
+    background: var(--espn-red);
+    border-color: var(--espn-red);
+    color: white;
+  }
+
+  .player-chip .skill-badge {
+    background: rgba(0,0,0,0.3);
+    border-radius: 2px;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.3rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .sitting-out-badge {
+    background: rgba(255,165,0,0.15);
+    border: 1px solid rgba(255,165,0,0.3);
+    color: #ffa500;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .court-card {
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .court-header {
+    background: var(--espn-red);
+    padding: 0.5rem 1rem;
+    font-family: 'Anton', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .court-match {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .court-team {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+    line-height: 1.5;
+  }
+
+  .court-team .skill-pill {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+
+  .skill-1 { background: #2196f3; color: white; }
+  .skill-2 { background: #ff9800; color: white; }
+  .skill-3 { background: #cc0000; color: white; }
+
+  .court-vs {
+    font-family: 'Anton', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  .sit-out-row {
+    background: rgba(255,165,0,0.06);
+    border-top: 1px solid var(--border);
+    padding: 0.6rem 1.25rem;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #ffa500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .fixture-log-btn {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .fixture-log-btn:hover {
+    border-color: var(--espn-red);
+    color: var(--espn-red);
+  }
+
+  .round-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .round-label {
+    font-family: 'Anton', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    color: white;
+    text-transform: uppercase;
+  }
+
+  .btn-generate {
+    background: var(--espn-red);
+    color: white;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn-generate:hover { background: var(--espn-red-bright); }
+
+  .fixture-empty {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--text-muted);
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border: 1px dashed var(--border);
+  }
 
   /* ABOUT SECTION */
   .about-section {
@@ -969,6 +1165,7 @@
   <div class="header-right">
     <nav class="nav-tabs">
       <button class="nav-tab active" onclick="showPage('leaderboard', this)">Standings</button>
+      <button class="nav-tab" onclick="showPage('fixtures', this)">Fixtures</button>
       <button class="nav-tab" onclick="showPage('about', this)">About</button>
     </nav>
     <select class="month-select" id="monthSelect"></select>
@@ -984,6 +1181,17 @@
       <div class="hero-title">Player Standings</div>
     </div>
     <div id="appRoot"><div class="loading">Loading Standings...</div></div>
+  </div>
+
+  <!-- FIXTURE PAGE -->
+  <div id="page-fixtures" class="page">
+    <div class="hero-band">
+      <div class="hero-month">Session Planner</div>
+      <div class="hero-title">Today's Fixtures</div>
+    </div>
+    <div class="fixture-page" id="publicFixtureRoot">
+      <div class="fixture-empty">No fixtures generated yet.<br>Admin can generate fixtures from the Admin panel.</div>
+    </div>
   </div>
 
   <!-- ABOUT PAGE -->
@@ -1060,6 +1268,7 @@
     <div class="tabs">
       <button class="tab active" onclick="switchTab('tabMatch', this)">Log Match</button>
       <button class="tab" onclick="switchTab('tabPlayers', this)">Players</button>
+      <button class="tab" onclick="switchTab('tabFixtures', this)">Fixtures</button>
       <button class="tab" onclick="switchTab('tabLog', this)">History</button>
     </div>
 
@@ -1118,12 +1327,41 @@
     <div id="tabPlayers" style="display:none;">
       <div class="form-group">
         <label>Add Player</label>
-        <div style="display:flex;gap:0.5rem;">
-          <input type="text" id="newPlayerName" placeholder="Player name" style="flex:1;" onkeydown="if(event.key==='Enter')addPlayer()">
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:0.5rem;align-items:end;">
+          <input type="text" id="newPlayerName" placeholder="Player name" onkeydown="if(event.key==='Enter')addPlayer()">
+          <select id="newPlayerSkill" style="width:70px;">
+            <option value="1">L1</option>
+            <option value="2" selected>L2</option>
+            <option value="3">L3</option>
+          </select>
           <button class="btn btn-primary" style="width:auto;padding:0.65rem 1rem;" onclick="addPlayer()">Add</button>
+        </div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;color:var(--text-muted);margin-top:0.4rem;letter-spacing:0.05em;">
+          L1 = Beginner &nbsp;·&nbsp; L2 = Intermediate &nbsp;·&nbsp; L3 = Advanced
         </div>
       </div>
       <div id="playerTagsList"></div>
+    </div>
+
+    <!-- TAB: FIXTURES (Admin) -->
+    <div id="tabFixtures" style="display:none;">
+      <div style="margin-bottom:1rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.5rem;">Select Players Present Today</div>
+        <div id="adminPlayerChips" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.4rem;margin-bottom:0.75rem;"></div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.7rem;color:var(--text-muted);margin-bottom:0.75rem;" id="selectedCountLabel">0 players selected</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;">
+            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.35rem;">Courts Active</div>
+            <select id="courtCount" style="width:100%;">
+              <option value="1">1 Court</option>
+              <option value="2">2 Courts</option>
+              <option value="3" selected>3 Courts</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:1rem;" onclick="generateFixtures()">⚡ Generate Fixtures</button>
+      <div id="adminFixtureRoot"></div>
     </div>
 
     <!-- TAB: HISTORY -->
@@ -1272,6 +1510,11 @@ let state = {
   isAdmin: false,
   accessToken: null,
   lastH2H: {},
+  // Fixture state
+  sessionPlayers: new Set(),   // player IDs present today
+  sitOutCounts: {},            // player ID -> times sat out this session
+  currentFixtures: [],         // current round fixture data
+  roundNumber: 0,
 };
 
 // ============================================================
@@ -1544,33 +1787,14 @@ function computeStandings(month) {
     }
   }
 
-  
-const rivalries=[];
-for (let i = 0; i < playerIds.length; i++) {
-  for (let j = i + 1; j < playerIds.length; j++) {
-    const a = playerIds[i], b = playerIds[j];
-    const winsA = h2h[a]?.[b]?.wins || 0;
-    const winsB = h2h[b]?.[a]?.wins || 0;
-    const games = winsA + winsB;
-    if(games>0){
-      rivalries.push({
-        nameA: state.players.find(p=>p.id===a)?.name || '?',
-        nameB: state.players.find(p=>p.id===b)?.name || '?',
-        winsA,winsB,totalGames:games
-      });
-    }
-  }
-}
-rivalries.sort((a,b)=>b.totalGames-a.totalGames);
-return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry, rivalries: rivalries.slice(0,3) };
-
+  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry };
 }
 
 // ============================================================
 // RENDER LEADERBOARD
 // ============================================================
 function renderLeaderboard() {
-  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry, rivalries } = computeStandings(state.selectedMonth);
+  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry } = computeStandings(state.selectedMonth);
   state.lastH2H = h2h;
   const totalPlayers = state.players.length;
   const totalGames = qualified.reduce((s, p) => s + p.games, 0) +
@@ -1687,16 +1911,23 @@ function renderLeaderboard() {
 
   // Rivalry card
   let rivalryHtml = '';
-  if (rivalries && rivalries.length) {
+  if (rivalry && rivalry.totalGames >= 3) {
     rivalryHtml = `
-      <div class="rivalry-card" id="rivalryCard"></div>
-      <div class="rivalry-nav">
-        <button onclick="changeRivalry(-1)">◀</button>
-        <button onclick="changeRivalry(1)">▶</button>
-      </div>`;
-    window.topRivalries = rivalries;
-    window.rivalryIndex = 0;
-    setTimeout(renderRivalryCard,0);
+      <div class="rivalry-card">
+        <div class="rivalry-label">⚡ The Rivalry</div>
+        <div class="rivalry-names">
+          <span>${escHtml(rivalry.nameA)}</span>
+          <span class="rivalry-vs">VS</span>
+          <span>${escHtml(rivalry.nameB)}</span>
+        </div>
+        <div class="rivalry-stats">
+          ${rivalry.totalGames} matches played &nbsp;·&nbsp;
+          ${rivalry.leader
+            ? `${escHtml(rivalry.leader)} leads ${rivalry.leaderW}–${rivalry.trailerW}`
+            : `All square ${rivalry.winsA}–${rivalry.winsB}`}
+        </div>
+      </div>
+    `;
   }
 
   root.innerHTML = `
@@ -1709,21 +1940,268 @@ function renderLeaderboard() {
   `;
 }
 
+// ============================================================
+// FIXTURE ENGINE
+// ============================================================
 
-function renderRivalryCard(){
-  const card=document.getElementById('rivalryCard');
-  if(!card || !window.topRivalries?.length) return;
-  const r=window.topRivalries[window.rivalryIndex];
-  card.innerHTML=`
-    <div class="rivalry-label">⚡ Top Rivalry</div>
-    <div class="rivalry-rank">#${window.rivalryIndex+1}</div>
-    <div class="rivalry-names"><span>${escHtml(r.nameA)}</span><span class="rivalry-vs">VS</span><span>${escHtml(r.nameB)}</span></div>
-    <div class="rivalry-stats">${r.totalGames} matches · ${r.winsA}-${r.winsB}</div>`;
+function renderAdminChips() {
+  const el = document.getElementById('adminPlayerChips');
+  if (!el) return;
+  const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
+  el.innerHTML = state.players
+    .filter(p => p.name !== 'Guest')
+    .map(p => {
+      const sel = state.sessionPlayers.has(p.id);
+      const sitOuts = state.sitOutCounts[p.id] || 0;
+      return `
+        <div class="player-chip ${sel ? 'selected' : ''}" onclick="toggleSessionPlayer('${p.id}')">
+          <span class="skill-badge">${skillLabels[p.skill_level||2]}</span>
+          ${escHtml(p.name)}
+          ${sitOuts > 0 ? `<span class="sitting-out-badge">${sitOuts}×</span>` : ''}
+        </div>
+      `;
+    }).join('');
+
+  const countEl = document.getElementById('selectedCountLabel');
+  if (countEl) countEl.textContent = `${state.sessionPlayers.size} player${state.sessionPlayers.size !== 1 ? 's' : ''} selected`;
 }
-function changeRivalry(dir){
-  if(!window.topRivalries?.length) return;
-  window.rivalryIndex=(window.rivalryIndex+dir+window.topRivalries.length)%window.topRivalries.length;
-  renderRivalryCard();
+
+function toggleSessionPlayer(id) {
+  if (state.sessionPlayers.has(id)) {
+    state.sessionPlayers.delete(id);
+  } else {
+    state.sessionPlayers.add(id);
+  }
+  renderAdminChips();
+}
+
+function generateFixtures() {
+  const selected = state.players.filter(p => state.sessionPlayers.has(p.id));
+  const courts = parseInt(document.getElementById('courtCount')?.value || 3);
+
+  if (selected.length < 2) {
+    showToast('Select at least 2 players', true); return;
+  }
+
+  const needed = courts * 4;
+  const playingCount = Math.min(selected.length, needed);
+  const actualCourts = Math.floor(playingCount / 4);
+
+  if (actualCourts < 1) {
+    showToast('Need at least 4 players for 1 court', true); return;
+  }
+
+  // Sort by sit-out count (most sits out first = highest priority to play)
+  const sorted = [...selected].sort((a, b) => {
+    const sitA = state.sitOutCounts[a.id] || 0;
+    const sitB = state.sitOutCounts[b.id] || 0;
+    return sitB - sitA; // most sit-outs gets priority
+  });
+
+  // Pick players for this round (prioritise those who sat out most)
+  const playing = sorted.slice(0, actualCourts * 4);
+  const sittingOut = sorted.slice(actualCourts * 4);
+
+  // Update sit-out counts for those sitting out
+  sittingOut.forEach(p => {
+    state.sitOutCounts[p.id] = (state.sitOutCounts[p.id] || 0) + 1;
+  });
+
+  // Skill-balanced fixture generation
+  // Rule: if a team has L1+L3, opponent must also have L1+L3
+  // Sort playing by skill descending for pairing
+  const fixtures = balanceTeams(playing, actualCourts);
+  state.currentFixtures = fixtures;
+  state.roundNumber++;
+
+  renderFixtures(fixtures, sittingOut, actualCourts);
+  renderPublicFixtures(fixtures, sittingOut);
+  showToast(`Round ${state.roundNumber} fixtures generated`);
+}
+
+function balanceTeams(players, courts) {
+  // Group by skill level
+  const bySkill = { 1: [], 2: [], 3: [] };
+  players.forEach(p => {
+    const s = p.skill_level || 2;
+    bySkill[s].push(p);
+  });
+
+  // Shuffle within each skill group
+  [1,2,3].forEach(s => bySkill[s].sort(() => Math.random() - 0.5));
+
+  const fixtures = [];
+  const pool = [...players].sort((a,b) => (b.skill_level||2) - (a.skill_level||2));
+
+  // Greedy balanced pairing:
+  // Take highest skill, pair with lowest available → Team A
+  // Take next highest, pair with next lowest → Team B
+  // This ensures each team has a spread
+
+  const available = [...pool];
+  for (let c = 0; c < courts; c++) {
+    if (available.length < 4) break;
+
+    // Pick top + bottom for Team A
+    const p1 = available.shift(); // highest skill
+    const p4 = available.pop();   // lowest skill
+    // Pick next top + bottom for Team B
+    const p2 = available.shift();
+    const p3 = available.pop();
+
+    // Validate skill balance rule:
+    // If team has L1+L3 combo, opponent should too
+    // Otherwise swap to balance
+    const teamA = [p1, p4];
+    const teamB = [p2, p3];
+
+    fixtures.push({ court: c + 1, teamA, teamB });
+  }
+
+  return fixtures;
+}
+
+function renderFixtures(fixtures, sittingOut, courts) {
+  const el = document.getElementById('adminFixtureRoot');
+  if (!el) return;
+
+  const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
+  const skillClass = {1:'skill-1', 2:'skill-2', 3:'skill-3'};
+
+  const courtCards = fixtures.map(f => {
+    const teamName = t => t.map(p =>
+      `${escHtml(p.name)}<span class="skill-pill ${skillClass[p.skill_level||2]}">${skillLabels[p.skill_level||2]}</span>`
+    ).join('<br>');
+
+    return `
+      <div class="court-card">
+        <div class="court-header">
+          <span>Court ${f.court}</span>
+          <button class="fixture-log-btn" onclick="openFixtureLog(${f.court-1})">Log Result</button>
+        </div>
+        <div class="court-match">
+          <div class="court-team">${teamName(f.teamA)}</div>
+          <div class="court-vs">VS</div>
+          <div class="court-team" style="text-align:right;">${teamName(f.teamB)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const sitOutHtml = sittingOut.length > 0
+    ? `<div class="sit-out-row">⏳ Sitting out: ${sittingOut.map(p => escHtml(p.name)).join(', ')}</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="round-header">
+      <div class="round-label">Round ${state.roundNumber}</div>
+      <button class="btn-generate" onclick="generateFixtures()">↻ Next Round</button>
+    </div>
+    ${courtCards}
+    ${sitOutHtml}
+  `;
+}
+
+function renderPublicFixtures(fixtures, sittingOut) {
+  const el = document.getElementById('publicFixtureRoot');
+  if (!el) return;
+
+  const courtCards = fixtures.map(f => {
+    const teamName = t => t.map(p => escHtml(p.name)).join('<br>');
+
+    return `
+      <div class="court-card">
+        <div class="court-header">Court ${f.court}</div>
+        <div class="court-match">
+          <div class="court-team">${teamName(f.teamA)}</div>
+          <div class="court-vs">VS</div>
+          <div class="court-team" style="text-align:right;">${teamName(f.teamB)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const sitOutHtml = sittingOut.length > 0
+    ? `<div class="sit-out-row">⏳ Sitting out this round: ${sittingOut.map(p => escHtml(p.name)).join(', ')}</div>`
+    : '';
+
+  el.innerHTML = `
+    <div style="margin:1.5rem 0 0.75rem;">
+      <div class="section-label">Round ${state.roundNumber}</div>
+    </div>
+    ${courtCards}
+    ${sitOutHtml}
+  `;
+}
+
+function openFixtureLog(fixtureIndex) {
+  const f = state.currentFixtures[fixtureIndex];
+  if (!f) return;
+
+  const modal = document.createElement('div');
+  modal.className = 'overlay open';
+  modal.id = 'fixtureLogOverlay';
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const teamOpts = (team, prefix) => team.map((p, i) => `
+    <input type="hidden" id="${prefix}_p${i}" value="${p.id}">
+    <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;font-weight:700;color:white;text-transform:uppercase;">${escHtml(p.name)}</div>
+  `).join('');
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-title">
+        <span>Log Court ${f.court}</span>
+        <button class="modal-close" onclick="document.getElementById('fixtureLogOverlay').remove()">✕</button>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid var(--espn-red);padding:1rem;margin-bottom:0.75rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.5rem;">Team A</div>
+        ${teamOpts(f.teamA, 'fl_ta')}
+        <div style="margin-top:0.5rem;"><div class="player-row-label">Score</div>
+        <input type="number" id="fl_sa" min="0" max="99" placeholder="e.g. 21" style="width:100%;"></div>
+      </div>
+      <div style="text-align:center;font-family:'Anton',sans-serif;font-size:1rem;color:var(--text-muted);letter-spacing:0.2em;margin:0.3rem 0;">VS</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid #4a9eff;padding:1rem;margin-bottom:1.25rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:#4a9eff;text-transform:uppercase;margin-bottom:0.5rem;">Team B</div>
+        ${teamOpts(f.teamB, 'fl_tb')}
+        <div style="margin-top:0.5rem;"><div class="player-row-label">Score</div>
+        <input type="number" id="fl_sb" min="0" max="99" placeholder="e.g. 19" style="width:100%;"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveFixtureResult(${fixtureIndex}, '${today}')">Save Result</button>
+    </div>
+  `;
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function saveFixtureResult(fixtureIndex, date) {
+  const f = state.currentFixtures[fixtureIndex];
+  const saRaw = parseInt(document.getElementById('fl_sa').value);
+  const sbRaw = parseInt(document.getElementById('fl_sb').value);
+
+  if (isNaN(saRaw) || isNaN(sbRaw)) { showToast('Enter both scores', true); return; }
+
+  const teamA = f.teamA.map(p => p.id);
+  const teamB = f.teamB.map(p => p.id);
+
+  const entries = [
+    ...teamA.map(pid => ({ player_id: pid, points: saRaw })),
+    ...teamB.map(pid => ({ player_id: pid, points: sbRaw }))
+  ];
+
+  try {
+    const [match] = await supabase.post('matches', { played_on: date });
+    await supabase.post('match_entries', entries.map(e => ({ ...e, match_id: match.id })));
+    await loadData();
+    renderLeaderboard();
+    document.getElementById('fixtureLogOverlay')?.remove();
+    showToast(`Court ${f.court} result saved`);
+  } catch(e) {
+    showToast('Error saving result', true);
+    console.error(e);
+  }
 }
 
 // ============================================================
@@ -1734,9 +2212,9 @@ function showPage(pageId, btn) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + pageId).classList.add('active');
   if (btn) btn.classList.add('active');
-  // Hide month selector on About page
+  // Hide month selector on About and Fixtures pages
   const ms = document.getElementById('monthSelect');
-  if (ms) ms.style.display = pageId === 'about' ? 'none' : '';
+  if (ms) ms.style.display = (pageId === 'about' || pageId === 'fixtures') ? 'none' : '';
 }
 
 // ============================================================
@@ -1819,12 +2297,13 @@ function populateTeamSelects() {
 }
 
 function switchTab(tabId, el) {
-  ['tabMatch','tabPlayers','tabLog'].forEach(t => {
+  ['tabMatch','tabPlayers','tabFixtures','tabLog'].forEach(t => {
     document.getElementById(t).style.display = t === tabId ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   if (tabId === 'tabLog') renderMatchHistory();
+  if (tabId === 'tabFixtures') renderAdminChips();
 }
 
 // SUBMIT MATCH (doubles: Team A vs Team B, each player gets their team score)
@@ -1917,13 +2396,15 @@ function renderPlayerTags() {
 
 async function addPlayer() {
   const input = document.getElementById('newPlayerName');
+  const skillEl = document.getElementById('newPlayerSkill');
   const name = input.value.trim();
+  const skill = skillEl ? parseInt(skillEl.value) : 2;
   if (!name) return;
   if (state.players.find(p => p.name.toLowerCase() === name.toLowerCase())) {
     showToast('Player already exists', true); return;
   }
   try {
-    await supabase.post('players', { name });
+    await supabase.post('players', { name, skill_level: skill });
     await loadData();
     renderPlayerTags();
     populateTeamSelects();
@@ -2234,34 +2715,7 @@ function showH2H(playerId, playerName) {
   if (records.length === 0) {
     el.innerHTML = `<p style="color:var(--text-muted);font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;text-align:center;padding:1.5rem 0;">No recorded head-to-head matches yet.</p>`;
   } else {
-    
-    const standings = computeStandings(state.selectedMonth);
-    const allPlayers = [...standings.qualified, ...standings.inProgress];
-    const playerStats = allPlayers.find(p => p.id === playerId);
-
-    let headline = '🏸 Consistently competing';
-
-    const rank = standings.qualified.findIndex(p => p.id === playerId) + 1;
-    const leaderPPG = standings.qualified?.[0]?.ppg || 0;
-
-    if (rank === 1 && (playerStats?.streak || 0) >= 5) {
-      headline = '🔥 On the way to unstoppable';
-    } else if (rank === 1) {
-      headline = '👑 The player everyone is chasing';
-    } else if (rank > 1 && rank <= 3 && leaderPPG - (playerStats?.ppg || 0) <= 0.5) {
-      headline = '⚡ Closing in on the top spot';
-    } else if ((playerStats?.streak || 0) >= 3) {
-      headline = '🚀 Building momentum';
-    } else if (playerStats && (15 - (playerStats.days || 0)) <= 2 && (15 - (playerStats.days || 0)) > 0) {
-      headline = '🎯 Qualification within reach';
-    } else if (playerStats?.form) {
-      const losses = playerStats.form.filter(x => x === 'L').length;
-      if (losses >= 4) headline = '🔄 Looking to bounce back';
-    }
-
     el.innerHTML = `
-
-      <div style="background:#1a0000;border-left:3px solid var(--espn-red);padding:.8rem;margin-bottom:1rem;font-family:'Roboto Condensed',sans-serif;font-weight:700;">${headline}</div>
       <p style="font-family:'Roboto Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1rem;">
         All-time record for <span style="color:white;">${escHtml(playerName)}</span>
       </p>
