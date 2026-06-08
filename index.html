@@ -1043,6 +1043,101 @@
     border: 1px dashed var(--border);
   }
 
+  .pending-score-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .pending-score-card {
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--espn-red);
+    padding: 1rem 1.25rem;
+  }
+
+  .pending-score-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .pending-score-match {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+  }
+
+  .pending-score-team {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.5;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .pending-score-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.6rem;
+    align-items: end;
+  }
+
+  .pending-score-actions .btn {
+    width: auto;
+    padding: 0.7rem 1rem;
+  }
+
+  .pending-score-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--espn-red);
+  }
+
+  .pending-score-skill {
+    display: inline-block;
+    margin-left: 0.35rem;
+    font-size: 0.62rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    vertical-align: middle;
+  }
+
+  .guest-skill-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .guest-skill-card {
+    background: #141414;
+    border: 1px solid var(--border);
+    padding: 0.75rem;
+  }
+
+  .guest-skill-title {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+
   /* ABOUT SECTION */
   .about-section {
     padding: 2rem 0 4rem;
@@ -1166,6 +1261,7 @@
     <nav class="nav-tabs">
       <button class="nav-tab active" onclick="showPage('leaderboard', this)">Standings</button>
       <button class="nav-tab" onclick="showPage('fixtures', this)">Fixtures</button>
+      <button class="nav-tab" onclick="showPage('scores', this)">Log Scores</button>
       <button class="nav-tab" onclick="showPage('about', this)">About</button>
     </nav>
     <select class="month-select" id="monthSelect"></select>
@@ -1191,6 +1287,17 @@
     </div>
     <div class="fixture-page" id="publicFixtureRoot">
       <div class="fixture-empty">No fixtures generated yet.<br>Admin can generate fixtures from the Admin panel.</div>
+    </div>
+  </div>
+
+  <!-- SCORES PAGE -->
+  <div id="page-scores" class="page">
+    <div class="hero-band">
+      <div class="hero-month">Score Entry</div>
+      <div class="hero-title">Pending Matches</div>
+    </div>
+    <div id="scoreLogRoot" class="fixture-page">
+      <div class="fixture-empty">No pending fixtures to log.</div>
     </div>
   </div>
 
@@ -1269,6 +1376,7 @@
       <button class="tab active" onclick="switchTab('tabMatch', this)">Log Match</button>
       <button class="tab" onclick="switchTab('tabPlayers', this)">Players</button>
       <button class="tab" onclick="switchTab('tabFixtures', this)">Fixtures</button>
+      <button class="tab" onclick="switchTab('tabScoreQueue', this)">Log Scores</button>
       <button class="tab" onclick="switchTab('tabLog', this)">History</button>
     </div>
 
@@ -1360,13 +1468,21 @@
           </div>
           <div style="flex:1;min-width:140px;">
             <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.35rem;">Number of Guests</div>
-            <input type="number" id="guestCount" min="0" step="1" value="0" style="width:100%;">
-            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;color:var(--text-muted);margin-top:0.35rem;letter-spacing:0.05em;">Guests are ranked L2 by default and included in fixture generation</div>
+            <input type="number" id="guestCount" min="0" step="1" value="0" style="width:100%;" onchange="renderGuestSkillInputs()">
+            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;color:var(--text-muted);margin-top:0.35rem;letter-spacing:0.05em;">Each guest can have an individual skill level</div>
           </div>
         </div>
+        <div id="guestSkillInputs"></div>
       </div>
       <button class="btn btn-primary" style="margin-bottom:1rem;" onclick="generateFixtures()">⚡ Generate Fixtures</button>
       <div id="adminFixtureRoot"></div>
+    </div>
+
+    <!-- TAB: LOG SCORES -->
+    <div id="tabScoreQueue" style="display:none;">
+      <div id="adminScoreQueue" class="fixture-page">
+        <div class="fixture-empty">No pending fixtures to log.</div>
+      </div>
     </div>
 
     <!-- TAB: HISTORY -->
@@ -1479,6 +1595,10 @@ const supabase = {
     return this.query(`${table}?${params}`, { method: 'DELETE', prefer: '' });
   },
 
+  async patch(table, params, body) {
+    return this.query(`${table}?${params}`, { method: 'PATCH', body });
+  },
+
   async signIn(email, password) {
     const res = await fetch(`${CONFIG.supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',
@@ -1520,6 +1640,7 @@ let state = {
   sitOutCounts: {},            // player ID -> times sat out this session
   allRounds: [],               // full day schedule
   roundNumber: 0,
+  fixtures: [],
 };
 
 // ============================================================
@@ -1614,17 +1735,19 @@ function populateMonthSelector() {
 
 async function loadData() {
   try {
-    const [players, matches, entries] = await Promise.all([
+    const [players, matches, entries, fixtures] = await Promise.all([
       supabase.get('players', 'order=name'),
       supabase.get('matches', 'order=played_on.desc'),
-      supabase.get('match_entries', 'select=*,player_id,match_id,points')
+      supabase.get('match_entries', 'select=*,player_id,match_id,points'),
+      supabase.get('fixtures', 'order=fixture_date.desc,round_no.desc,court_no.asc')
     ]);
     state.players = players;
     state.matches = matches;
     state.entries = entries;
+    state.fixtures = fixtures || [];
     // Auto-seed Guest player if not present
     if (!players.find(p => p.name === 'Guest')) {
-      await supabase.post('players', { name: 'Guest' });
+      await supabase.post('players', { name: 'Guest', skill_level: 2 });
       const fresh = await supabase.get('players', 'order=name');
       state.players = fresh;
     }
@@ -1978,6 +2101,132 @@ function toggleSessionPlayer(id) {
     state.sessionPlayers.add(id);
   }
   renderAdminChips();
+}
+
+function currentFixtureDate() {
+  const dateInput = document.getElementById('matchDate');
+  return dateInput?.value || new Date().toISOString().slice(0, 10);
+}
+
+function renderGuestSkillInputs() {
+  const host = document.getElementById('guestSkillInputs');
+  const count = Math.max(0, parseInt(document.getElementById('guestCount')?.value || '0', 10));
+  if (!host) return;
+  if (!count) {
+    host.innerHTML = '';
+    return;
+  }
+  host.innerHTML = `
+    <div class="guest-skill-grid">
+      ${Array.from({ length: count }, (_, i) => `
+        <div class="guest-skill-card">
+          <div class="guest-skill-title">Guest ${i + 1}</div>
+          <select id="guestSkill_${i}">
+            <option value="1">L1</option>
+            <option value="2" ${i === 1 ? 'selected' : ''}>L2</option>
+            <option value="3" ${i >= 2 ? 'selected' : ''}>L3</option>
+          </select>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function getPendingFixtures() {
+  return (state.fixtures || []).filter(f => !f.logged_match_id && (f.team_a_score == null || f.team_b_score == null));
+}
+
+function fixturePlayerMarkup(name) {
+  const player = state.players.find(p => p.name === name);
+  const skill = player?.skill_level || 2;
+  return `${escHtml(name)}<span class="pending-score-skill skill-${skill}">L${skill}</span>`;
+}
+
+function renderScoreQueue(targetId = 'scoreLogRoot') {
+  const root = document.getElementById(targetId);
+  if (!root) return;
+  const pending = getPendingFixtures();
+  if (!pending.length) {
+    root.innerHTML = `<div class="fixture-empty">No pending fixtures to log.</div>`;
+    return;
+  }
+  root.innerHTML = `<div class="pending-score-list">${pending.map(f => `
+    <div class="pending-score-card">
+      <div class="pending-score-meta">
+        <span class="pending-score-status">Pending · Round ${f.round_no}</span>
+        <span>${formatDate(f.fixture_date)} · Court ${f.court_no}</span>
+      </div>
+      <div class="pending-score-match">
+        <div class="pending-score-team">${fixturePlayerMarkup(f.team_a_player_1)}<br>${fixturePlayerMarkup(f.team_a_player_2)}</div>
+        <div class="court-vs">VS</div>
+        <div class="pending-score-team" style="text-align:right;">${fixturePlayerMarkup(f.team_b_player_1)}<br>${fixturePlayerMarkup(f.team_b_player_2)}</div>
+      </div>
+      <div class="pending-score-actions">
+        <div>
+          <label>Team A Score</label>
+          <input type="number" min="0" max="99" id="queue_ta_${f.id}" placeholder="21">
+        </div>
+        <div>
+          <label>Team B Score</label>
+          <input type="number" min="0" max="99" id="queue_tb_${f.id}" placeholder="15">
+        </div>
+        <button class="btn btn-primary" onclick="submitFixtureResult('${f.id}')">Log Result</button>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+async function persistFixtures(rounds) {
+  try {
+    if (state.fixtures?.length) {
+      await supabase.delete('fixtures', 'id=neq.00000000-0000-0000-0000-000000000000');
+    }
+    const fixtureDate = currentFixtureDate();
+    const rows = [];
+    rounds.forEach((round, roundIndex) => {
+      round.matches.forEach((match, matchIndex) => {
+        rows.push({
+          fixture_date: fixtureDate,
+          round_no: roundIndex + 1,
+          court_no: matchIndex + 1,
+          team_a_player_1: match.teamA[0].name,
+          team_a_player_2: match.teamA[1].name,
+          team_b_player_1: match.teamB[0].name,
+          team_b_player_2: match.teamB[1].name,
+          team_a_score: null,
+          team_b_score: null,
+          logged_match_id: null
+        });
+      });
+    });
+    if (rows.length) await supabase.post('fixtures', rows);
+    await loadData();
+    renderPublicFixtures();
+    renderAdminFixtures();
+    renderScoreQueue('scoreLogRoot');
+    renderScoreQueue('adminScoreQueue');
+    showToast(`Generated ${rounds.length} round${rounds.length !== 1 ? 's' : ''} of fixtures`);
+  } catch (e) {
+    console.error(e);
+    showToast('Could not save fixtures', true);
+  }
+}
+
+async function submitFixtureResult(fixtureId) {
+  const fixture = (state.fixtures || []).find(f => f.id === fixtureId);
+  if (!fixture) return showToast('Fixture not found', true);
+  const teamAScore = parseInt((document.getElementById(`queue_ta_${fixtureId}`)?.value || '').trim(), 10);
+  const teamBScore = parseInt((document.getElementById(`queue_tb_${fixtureId}`)?.value || '').trim(), 10);
+  if (Number.isNaN(teamAScore) || Number.isNaN(teamBScore)) return showToast('Enter both scores', true);
+  if (teamAScore === teamBScore) return showToast('Scores cannot be tied', true);
+  await submitMatch({
+    date: fixture.fixture_date,
+    teamA: [fixture.team_a_player_1, fixture.team_a_player_2],
+    teamB: [fixture.team_b_player_1, fixture.team_b_player_2],
+    scoreA: teamAScore,
+    scoreB: teamBScore,
+    fixtureId
+  });
 }
 
 // ── FIXTURE ENGINE: Full day schedule ──
@@ -2394,7 +2643,7 @@ function switchTab(tabId, el) {
 }
 
 // SUBMIT MATCH (doubles: Team A vs Team B, each player gets their team score)
-async function submitMatch() {
+async function submitMatch(prefill = null) {
   const date = document.getElementById('matchDate').value;
   if (!date) { showToast('Please select a date', true); return; }
 
