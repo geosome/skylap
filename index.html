@@ -1043,101 +1043,6 @@
     border: 1px dashed var(--border);
   }
 
-  .pending-score-list {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .pending-score-card {
-    background: #0d0d0d;
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--espn-red);
-    padding: 1rem 1.25rem;
-  }
-
-  .pending-score-meta {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.75rem;
-    font-family: 'Roboto Condensed', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-
-  .pending-score-match {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 0.75rem;
-    align-items: center;
-    margin-bottom: 0.9rem;
-  }
-
-  .pending-score-team {
-    font-family: 'Roboto Condensed', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: white;
-    line-height: 1.5;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .pending-score-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 0.6rem;
-    align-items: end;
-  }
-
-  .pending-score-actions .btn {
-    width: auto;
-    padding: 0.7rem 1rem;
-  }
-
-  .pending-score-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: var(--espn-red);
-  }
-
-  .pending-score-skill {
-    display: inline-block;
-    margin-left: 0.35rem;
-    font-size: 0.62rem;
-    padding: 0.1rem 0.35rem;
-    border-radius: 2px;
-    vertical-align: middle;
-  }
-
-  .guest-skill-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.75rem;
-  }
-
-  .guest-skill-card {
-    background: #141414;
-    border: 1px solid var(--border);
-    padding: 0.75rem;
-  }
-
-  .guest-skill-title {
-    font-family: 'Roboto Condensed', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 0.35rem;
-  }
-
   /* ABOUT SECTION */
   .about-section {
     padding: 2rem 0 4rem;
@@ -1261,7 +1166,8 @@
     <nav class="nav-tabs">
       <button class="nav-tab active" onclick="showPage('leaderboard', this)">Standings</button>
       <button class="nav-tab" onclick="showPage('fixtures', this)">Fixtures</button>
-      <button class="nav-tab" onclick="showPage('scores', this)">Log Scores</button>
+      <button class="nav-tab" onclick="showPage('results', this)">Results</button>
+      <button class="nav-tab" onclick="showPage('elite', this)">Elite Status</button>
       <button class="nav-tab" onclick="showPage('about', this)">About</button>
     </nav>
     <select class="month-select" id="monthSelect"></select>
@@ -1290,15 +1196,22 @@
     </div>
   </div>
 
-  <!-- SCORES PAGE -->
-  <div id="page-scores" class="page">
+  <!-- HISTORIC RESULTS PAGE -->
+  <div id="page-results" class="page">
     <div class="hero-band">
-      <div class="hero-month">Score Entry</div>
-      <div class="hero-title">Pending Matches</div>
+      <div class="hero-month">Last 7 Days</div>
+      <div class="hero-title">Match Results</div>
     </div>
-    <div id="scoreLogRoot" class="fixture-page">
-      <div class="fixture-empty">No pending fixtures to log.</div>
+    <div id="resultsRoot" style="padding:2rem 0 4rem;"></div>
+  </div>
+
+  <!-- ELITE STATUS PAGE -->
+  <div id="page-elite" class="page">
+    <div class="hero-band">
+      <div class="hero-month">Earned Badges</div>
+      <div class="hero-title">Player Achievements</div>
     </div>
+    <div id="eliteRoot" style="padding:2rem 0 4rem;"></div>
   </div>
 
   <!-- ABOUT PAGE -->
@@ -1359,7 +1272,7 @@
       <label>Password</label>
       <input type="password" id="adminPassword" placeholder="Your Supabase password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div id="loginError" style="display:none;color:var(--red);font-family:Share Tech Mono,monospace;font-size:0.75rem;margin-bottom:1rem;letter-spacing:0.05em;"></div>
+    <div id="loginError" style="display:none;color:#ff4444;font-family:Roboto Condensed,sans-serif;font-size:0.75rem;margin-bottom:1rem;letter-spacing:0.05em;"></div>
     <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
   </div>
 </div>
@@ -1376,7 +1289,7 @@
       <button class="tab active" onclick="switchTab('tabMatch', this)">Log Match</button>
       <button class="tab" onclick="switchTab('tabPlayers', this)">Players</button>
       <button class="tab" onclick="switchTab('tabFixtures', this)">Fixtures</button>
-      <button class="tab" onclick="switchTab('tabScoreQueue', this)">Log Scores</button>
+      <button class="tab" onclick="switchTab('tabScores', this)">Log Scores</button>
       <button class="tab" onclick="switchTab('tabLog', this)">History</button>
     </div>
 
@@ -1388,8 +1301,8 @@
       </div>
 
       <!-- TEAM A -->
-      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid var(--amber);padding:1rem;margin-bottom:0.75rem;">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;color:var(--amber);text-transform:uppercase;margin-bottom:0.75rem;">Team A</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid var(--espn-red);padding:1rem;margin-bottom:0.75rem;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.75rem;">Team A</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.75rem;">
           <div>
             <div class="player-row-label">Player 1</div>
@@ -1411,7 +1324,7 @@
 
       <!-- TEAM B -->
       <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid #4a9eff;padding:1rem;margin-bottom:1.25rem;">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;color:#4a9eff;text-transform:uppercase;margin-bottom:0.75rem;">Team B</div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;letter-spacing:0.2em;color:#4a9eff;text-transform:uppercase;margin-bottom:0.75rem;">Team B</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.75rem;">
           <div>
             <div class="player-row-label">Player 1</div>
@@ -1468,21 +1381,18 @@
           </div>
           <div style="flex:1;min-width:140px;">
             <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.35rem;">Number of Guests</div>
-            <input type="number" id="guestCount" min="0" step="1" value="0" style="width:100%;" onchange="renderGuestSkillInputs()">
-            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;color:var(--text-muted);margin-top:0.35rem;letter-spacing:0.05em;">Each guest can have an individual skill level</div>
+            <input type="number" id="guestCount" min="0" step="1" value="0" onchange="updateGuestSkillInputs()" style="width:100%;">
           </div>
         </div>
-        <div id="guestSkillInputs"></div>
+        <div id="guestSkillInputs" style="margin-top:0.75rem;"></div>
       </div>
       <button class="btn btn-primary" style="margin-bottom:1rem;" onclick="generateFixtures()">⚡ Generate Fixtures</button>
       <div id="adminFixtureRoot"></div>
     </div>
 
-    <!-- TAB: LOG SCORES -->
-    <div id="tabScoreQueue" style="display:none;">
-      <div id="adminScoreQueue" class="fixture-page">
-        <div class="fixture-empty">No pending fixtures to log.</div>
-      </div>
+    <!-- TAB: LOG SCORES (from fixtures) -->
+    <div id="tabScores" style="display:none;">
+      <div id="logScoresRoot"><div class="loading">LOADING...</div></div>
     </div>
 
     <!-- TAB: HISTORY -->
@@ -1595,10 +1505,6 @@ const supabase = {
     return this.query(`${table}?${params}`, { method: 'DELETE', prefer: '' });
   },
 
-  async patch(table, params, body) {
-    return this.query(`${table}?${params}`, { method: 'PATCH', body });
-  },
-
   async signIn(email, password) {
     const res = await fetch(`${CONFIG.supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',
@@ -1640,7 +1546,7 @@ let state = {
   sitOutCounts: {},            // player ID -> times sat out this session
   allRounds: [],               // full day schedule
   roundNumber: 0,
-  fixtures: [],
+  guestSkillLevels: [],        // array of skill levels for each guest
 };
 
 // ============================================================
@@ -1735,19 +1641,17 @@ function populateMonthSelector() {
 
 async function loadData() {
   try {
-    const [players, matches, entries, fixtures] = await Promise.all([
+    const [players, matches, entries] = await Promise.all([
       supabase.get('players', 'order=name'),
       supabase.get('matches', 'order=played_on.desc'),
-      supabase.get('match_entries', 'select=*,player_id,match_id,points'),
-      supabase.get('fixtures', 'order=fixture_date.desc,round_no.desc,court_no.asc')
+      supabase.get('match_entries', 'select=*,player_id,match_id,points')
     ]);
     state.players = players;
     state.matches = matches;
     state.entries = entries;
-    state.fixtures = fixtures || [];
     // Auto-seed Guest player if not present
     if (!players.find(p => p.name === 'Guest')) {
-      await supabase.post('players', { name: 'Guest', skill_level: 2 });
+      await supabase.post('players', { name: 'Guest' });
       const fresh = await supabase.get('players', 'order=name');
       state.players = fresh;
     }
@@ -1820,7 +1724,6 @@ function computeStandings(month) {
     const scores = [...new Set(entries.map(e => e.points))];
     if (scores.length < 2) return;
     const maxScore = Math.max(...scores);
-    const minScore = Math.min(...scores);
     entries.forEach(e => {
       if (!playerStreaks.hasOwnProperty(e.player_id)) return;
       if (e.points === maxScore) {
@@ -1892,37 +1795,39 @@ function computeStandings(month) {
   all.forEach(s => { s.form = (form5[s.id] || []).reverse(); });
 
   // ── Rivalry: pair who played each other most (all-time) ──
-  let rivalry = null;
-  let maxGames = 0;
+  // Calculate top 10 rivalries (most games played)
+  const rivalries = [];
   const playerIds = state.players.filter(p => p.name !== 'Guest').map(p => p.id);
   for (let i = 0; i < playerIds.length; i++) {
     for (let j = i + 1; j < playerIds.length; j++) {
       const a = playerIds[i], b = playerIds[j];
       if (!h2h[a] || !h2h[a][b]) continue;
-      // h2h[a][b].wins = times a beat b; h2h[b][a].wins = times b beat a
       const winsA = h2h[a][b].wins || 0;
       const winsB = (h2h[b] && h2h[b][a]) ? (h2h[b][a].wins || 0) : 0;
       const games = winsA + winsB;
-      if (games > maxGames) {
-        maxGames = games;
+      if (games >= 3) { // Only include rivalries with 3+ games
         const nameA = state.players.find(p => p.id === a)?.name || '?';
         const nameB = state.players.find(p => p.id === b)?.name || '?';
         const leader   = winsA > winsB ? nameA : winsB > winsA ? nameB : null;
         const leaderW  = Math.max(winsA, winsB);
         const trailerW = Math.min(winsA, winsB);
-        rivalry = { nameA, nameB, winsA, winsB, totalGames: games, leader, leaderW, trailerW };
+        rivalries.push({ nameA, nameB, winsA, winsB, totalGames: games, leader, leaderW, trailerW });
       }
     }
   }
 
-  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry };
+  rivalries.sort((a, b) => b.totalGames - a.totalGames);
+  const topRivalries = rivalries.slice(0, 10);
+  const rivalry = topRivalries.length > 0 ? topRivalries[0] : null;
+
+  return { qualified, inProgress, totalMatches: monthMatches.length, mvpId, h2h, rivalry, topRivalries };
 }
 
 // ============================================================
 // RENDER LEADERBOARD
 // ============================================================
 function renderLeaderboard() {
-  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry } = computeStandings(state.selectedMonth);
+  const { qualified, inProgress, totalMatches, mvpId, h2h, rivalry, topRivalries } = computeStandings(state.selectedMonth);
   state.lastH2H = h2h;
   const totalPlayers = state.players.length;
   const totalGames = qualified.reduce((s, p) => s + p.games, 0) +
@@ -1966,7 +1871,7 @@ function renderLeaderboard() {
         </thead>
         <tbody>
           ${qualified.map((p, i) => `
-            <tr data-rank="${i+1}" style="animation-delay:${i*0.06}s">
+            <tr data-rank="${i+1}" style="animation-delay:${i*0.06}s;cursor:pointer" onclick="showH2H('${p.id}', '${escHtml(p.name)}')" title="Click for head-to-head record">
               <td class="rank-cell">${i+1}</td>
               <td class="player-name">${escHtml(p.name)}</td>
               <td class="ppg-cell">${p.ppg.toFixed(2)}</td>
@@ -2037,10 +1942,10 @@ function renderLeaderboard() {
     </button>
   `;
 
-  // Rivalry card
+  // Rivalry cards - top 1 + expandable top 10
   let rivalryHtml = '';
   if (rivalry && rivalry.totalGames >= 3) {
-    rivalryHtml = `
+    const topRivalryCard = `
       <div class="rivalry-card">
         <div class="rivalry-label">⚡ The Rivalry</div>
         <div class="rivalry-names">
@@ -2056,7 +1961,42 @@ function renderLeaderboard() {
         </div>
       </div>
     `;
+
+    const otherRivalries = topRivalries.slice(1).map((r, i) => `
+      <div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:0.5rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;font-weight:700;color:white;text-transform:uppercase;">
+          ${i+2}. ${escHtml(r.nameA)} vs ${escHtml(r.nameB)}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.25rem;">
+          ${r.totalGames} matches &nbsp;·&nbsp;
+          ${r.leader ? `${escHtml(r.leader)} leads ${r.leaderW}–${r.trailerW}` : `All square ${r.winsA}–${r.winsB}`}
+        </div>
+      </div>
+    `).join('');
+
+    const expandList = topRivalries.length > 1 ? `
+      <div style="margin-top:1rem;">
+        <div onclick="toggleElement('rivalriesList')" style="cursor:pointer;font-family:'Roboto Condensed',sans-serif;font-size:0.8rem;font-weight:700;color:var(--espn-red);letter-spacing:0.1em;text-transform:uppercase;display:flex;align-items:center;gap:0.5rem;">
+          <span id="rivalriesList-toggle">▼</span>
+          Top 10 Rivalries (${topRivalries.length})
+        </div>
+        <div id="rivalriesList" style="display:none;margin-top:0.75rem;">
+          ${otherRivalries}
+        </div>
+      </div>
+    ` : '';
+
+    rivalryHtml = topRivalryCard + expandList;
   }
+
+  // Helper for toggling elements
+  window.toggleElement = function(id) {
+    const el = document.getElementById(id);
+    const toggle = document.getElementById(id + '-toggle');
+    const hidden = el.style.display === 'none';
+    el.style.display = hidden ? 'block' : 'none';
+    if (toggle) toggle.textContent = hidden ? '▲' : '▼';
+  };
 
   root.innerHTML = `
     ${statsHtml}
@@ -2072,7 +2012,7 @@ function renderLeaderboard() {
 // FIXTURE ENGINE
 // ============================================================
 
-function renderAdminChips() {
+async function renderAdminChips() {
   const el = document.getElementById('adminPlayerChips');
   if (!el) return;
   const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
@@ -2092,6 +2032,62 @@ function renderAdminChips() {
 
   const countEl = document.getElementById('selectedCountLabel');
   if (countEl) countEl.textContent = `${state.sessionPlayers.size} player${state.sessionPlayers.size !== 1 ? 's' : ''} selected`;
+
+  // Also show saved fixtures for today
+  await renderSavedFixturesInAdmin();
+}
+
+async function renderSavedFixturesInAdmin() {
+  const el = document.getElementById('adminFixtureRoot');
+  if (!el) return;
+
+  const sessionDate = new Date().toISOString().split('T')[0];
+  const savedFixtures = await loadPendingFixtures(sessionDate);
+
+  if (!savedFixtures || savedFixtures.length === 0) {
+    return; // Don't show anything if no saved fixtures
+  }
+
+  const groupedByRound = {};
+  savedFixtures.forEach(f => {
+    if (!groupedByRound[f.round_no]) groupedByRound[f.round_no] = [];
+    groupedByRound[f.round_no].push(f);
+  });
+
+  const fixturesHtml = Object.entries(groupedByRound)
+    .map(([roundNo, fixtures]) => {
+      const courtCards = fixtures.map(f => `
+        <div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;">
+            <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.8rem;font-weight:700;color:white;">Court ${f.court_no}: ${f.team_a_player_1} & ${f.team_a_player_2} vs ${f.team_b_player_1} & ${f.team_b_player_2}</div>
+          </div>
+          <button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.7rem;margin-left:0.5rem;" onclick="deleteFixtureFromDB('${f.id}')">Delete</button>
+        </div>
+      `).join('');
+
+      return `
+        <div style="margin-bottom:1rem;">
+          <div style="font-family:'Anton',sans-serif;font-size:0.9rem;letter-spacing:0.08em;color:white;margin-bottom:0.5rem;">Round ${roundNo}</div>
+          ${courtCards}
+        </div>
+      `;
+    })
+    .join('');
+
+  const savedFixturesSection = `
+    <div style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1.5rem;">
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;color:var(--espn-red);text-transform:uppercase;margin-bottom:1rem;">Saved Fixtures for ${sessionDate}</div>
+      ${fixturesHtml}
+    </div>
+  `;
+
+  // Inject after the Generate button
+  const genBtn = el.querySelector('.btn-generate');
+  if (genBtn) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = savedFixturesSection;
+    genBtn.parentNode.insertBefore(wrapper.firstChild, el.nextSibling);
+  }
 }
 
 function toggleSessionPlayer(id) {
@@ -2101,132 +2097,6 @@ function toggleSessionPlayer(id) {
     state.sessionPlayers.add(id);
   }
   renderAdminChips();
-}
-
-function currentFixtureDate() {
-  const dateInput = document.getElementById('matchDate');
-  return dateInput?.value || new Date().toISOString().slice(0, 10);
-}
-
-function renderGuestSkillInputs() {
-  const host = document.getElementById('guestSkillInputs');
-  const count = Math.max(0, parseInt(document.getElementById('guestCount')?.value || '0', 10));
-  if (!host) return;
-  if (!count) {
-    host.innerHTML = '';
-    return;
-  }
-  host.innerHTML = `
-    <div class="guest-skill-grid">
-      ${Array.from({ length: count }, (_, i) => `
-        <div class="guest-skill-card">
-          <div class="guest-skill-title">Guest ${i + 1}</div>
-          <select id="guestSkill_${i}">
-            <option value="1">L1</option>
-            <option value="2" ${i === 1 ? 'selected' : ''}>L2</option>
-            <option value="3" ${i >= 2 ? 'selected' : ''}>L3</option>
-          </select>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function getPendingFixtures() {
-  return (state.fixtures || []).filter(f => !f.logged_match_id && (f.team_a_score == null || f.team_b_score == null));
-}
-
-function fixturePlayerMarkup(name) {
-  const player = state.players.find(p => p.name === name);
-  const skill = player?.skill_level || 2;
-  return `${escHtml(name)}<span class="pending-score-skill skill-${skill}">L${skill}</span>`;
-}
-
-function renderScoreQueue(targetId = 'scoreLogRoot') {
-  const root = document.getElementById(targetId);
-  if (!root) return;
-  const pending = getPendingFixtures();
-  if (!pending.length) {
-    root.innerHTML = `<div class="fixture-empty">No pending fixtures to log.</div>`;
-    return;
-  }
-  root.innerHTML = `<div class="pending-score-list">${pending.map(f => `
-    <div class="pending-score-card">
-      <div class="pending-score-meta">
-        <span class="pending-score-status">Pending · Round ${f.round_no}</span>
-        <span>${formatDate(f.fixture_date)} · Court ${f.court_no}</span>
-      </div>
-      <div class="pending-score-match">
-        <div class="pending-score-team">${fixturePlayerMarkup(f.team_a_player_1)}<br>${fixturePlayerMarkup(f.team_a_player_2)}</div>
-        <div class="court-vs">VS</div>
-        <div class="pending-score-team" style="text-align:right;">${fixturePlayerMarkup(f.team_b_player_1)}<br>${fixturePlayerMarkup(f.team_b_player_2)}</div>
-      </div>
-      <div class="pending-score-actions">
-        <div>
-          <label>Team A Score</label>
-          <input type="number" min="0" max="99" id="queue_ta_${f.id}" placeholder="21">
-        </div>
-        <div>
-          <label>Team B Score</label>
-          <input type="number" min="0" max="99" id="queue_tb_${f.id}" placeholder="15">
-        </div>
-        <button class="btn btn-primary" onclick="submitFixtureResult('${f.id}')">Log Result</button>
-      </div>
-    </div>
-  `).join('')}</div>`;
-}
-
-async function persistFixtures(rounds) {
-  try {
-    if (state.fixtures?.length) {
-      await supabase.delete('fixtures', 'id=neq.00000000-0000-0000-0000-000000000000');
-    }
-    const fixtureDate = currentFixtureDate();
-    const rows = [];
-    rounds.forEach((round, roundIndex) => {
-      round.matches.forEach((match, matchIndex) => {
-        rows.push({
-          fixture_date: fixtureDate,
-          round_no: roundIndex + 1,
-          court_no: matchIndex + 1,
-          team_a_player_1: match.teamA[0].name,
-          team_a_player_2: match.teamA[1].name,
-          team_b_player_1: match.teamB[0].name,
-          team_b_player_2: match.teamB[1].name,
-          team_a_score: null,
-          team_b_score: null,
-          logged_match_id: null
-        });
-      });
-    });
-    if (rows.length) await supabase.post('fixtures', rows);
-    await loadData();
-    renderPublicFixtures();
-    renderAdminFixtures();
-    renderScoreQueue('scoreLogRoot');
-    renderScoreQueue('adminScoreQueue');
-    showToast(`Generated ${rounds.length} round${rounds.length !== 1 ? 's' : ''} of fixtures`);
-  } catch (e) {
-    console.error(e);
-    showToast('Could not save fixtures', true);
-  }
-}
-
-async function submitFixtureResult(fixtureId) {
-  const fixture = (state.fixtures || []).find(f => f.id === fixtureId);
-  if (!fixture) return showToast('Fixture not found', true);
-  const teamAScore = parseInt((document.getElementById(`queue_ta_${fixtureId}`)?.value || '').trim(), 10);
-  const teamBScore = parseInt((document.getElementById(`queue_tb_${fixtureId}`)?.value || '').trim(), 10);
-  if (Number.isNaN(teamAScore) || Number.isNaN(teamBScore)) return showToast('Enter both scores', true);
-  if (teamAScore === teamBScore) return showToast('Scores cannot be tied', true);
-  await submitMatch({
-    date: fixture.fixture_date,
-    teamA: [fixture.team_a_player_1, fixture.team_a_player_2],
-    teamB: [fixture.team_b_player_1, fixture.team_b_player_2],
-    scoreA: teamAScore,
-    scoreB: teamBScore,
-    fixtureId
-  });
 }
 
 // ── FIXTURE ENGINE: Full day schedule ──
@@ -2262,14 +2132,48 @@ function balanceTeams(pool, numCourts) {
   return fixtures;
 }
 
-function generateFixtures() {
+function updateGuestSkillInputs() {
+  const count = parseInt(document.getElementById('guestCount')?.value || 0);
+  const container = document.getElementById('guestSkillInputs');
+  
+  // Initialize or resize the array
+  state.guestSkillLevels = Array(count).fill(2);
+
+  if (count === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.5rem;">Guest Skill Levels</div>
+    ${Array.from({length: count}, (_, i) => `
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+        <span style="flex:1;font-family:'Roboto Condensed',sans-serif;font-size:0.85rem;color:white;text-transform:uppercase;letter-spacing:0.04em;">Guest ${i+1}</span>
+        <select id="guestSkill-${i}" onchange="updateGuestSkillArray()" style="background:#1a1a1a;border:1px solid #444;color:#ccc;font-size:0.8rem;font-family:'Roboto Condensed',sans-serif;padding:0.35rem 0.5rem;cursor:pointer;">
+          <option value="1">L1</option>
+          <option value="2" selected>L2</option>
+          <option value="3">L3</option>
+        </select>
+      </div>
+    `).join('')}
+  `;
+}
+
+function updateGuestSkillArray() {
+  const count = parseInt(document.getElementById('guestCount')?.value || 0);
+  state.guestSkillLevels = Array.from({length: count}, (_, i) => 
+    parseInt(document.getElementById(`guestSkill-${i}`)?.value || 2)
+  );
+}
+
+async function generateFixtures() {
   const selected = state.players.filter(p => state.sessionPlayers.has(p.id));
   const guestCount = Math.max(0, parseInt(document.getElementById('guestCount')?.value || 0, 10) || 0);
-  state.fixturesGuestCount = guestCount;
+  updateGuestSkillArray();
   const guestPlayers = Array.from({ length: guestCount }, (_, i) => ({
     id: `guest-${Date.now()}-${i}`,
     name: `Guest ${i + 1}`,
-    skilllevel: 2,
+    skill_level: state.guestSkillLevels[i] || 2,
     isGuest: true,
   }));
   const selectedPool = [...selected, ...guestPlayers];
@@ -2325,8 +2229,8 @@ function generateFixtures() {
     }
 
     allRounds.push({
-      round: r + 1,
-      courts,
+      roundNum: r + 1,
+      fixtures: courts,
       sittingOut,
     });
   }
@@ -2334,6 +2238,12 @@ function generateFixtures() {
   state.allRounds = allRounds;
   state.roundNumber = 0;
   renderAllRounds();
+  renderPublicAllRounds();
+  
+  // Save to Supabase
+  const sessionDate = new Date().toISOString().split('T')[0];
+  await saveFixturesToDB(allRounds, sessionDate);
+  
   showToast(`${rounds} rounds generated for ${selectedPool.length} players`);
 }
 function renderAllRounds() {
@@ -2506,6 +2416,76 @@ function openFixtureLog(roundIndex, fixtureIndex) {
   document.body.appendChild(modal);
 }
 
+function openFixtureLogFromDB(fixtureId, roundNo, courtNo, ta1, ta2, tb1, tb2) {
+  const modal = document.createElement('div');
+  modal.className = 'overlay open';
+  modal.id = 'fixtureLogOverlay';
+
+  const today = new Date().toISOString().split('T')[0];
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-title">
+        <span>Round ${roundNo} · Court ${courtNo}</span>
+        <button class="modal-close" onclick="document.getElementById('fixtureLogOverlay').remove()">✕</button>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid var(--espn-red);padding:1rem;margin-bottom:0.75rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.5rem;">Team A</div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;font-weight:700;color:white;text-transform:uppercase;">${ta1}</div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;font-weight:700;color:white;text-transform:uppercase;margin-bottom:0.6rem;">${ta2}</div>
+        <div class="player-row-label">Score</div>
+        <input type="number" id="fl_sa" min="0" max="99" placeholder="e.g. 21" style="width:100%;">
+      </div>
+      <div style="text-align:center;font-family:'Anton',sans-serif;font-size:1rem;color:var(--text-muted);letter-spacing:0.2em;margin:0.3rem 0;">VS</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-top:2px solid #4a9eff;padding:1rem;margin-bottom:1.25rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;color:#4a9eff;text-transform:uppercase;margin-bottom:0.5rem;">Team B</div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;font-weight:700;color:white;text-transform:uppercase;">${tb1}</div>
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.9rem;font-weight:700;color:white;text-transform:uppercase;margin-bottom:0.6rem;">${tb2}</div>
+        <div class="player-row-label">Score</div>
+        <input type="number" id="fl_sb" min="0" max="99" placeholder="e.g. 19" style="width:100%;"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveFixtureResultFromDB('${fixtureId}', '${today}', '${ta1}', '${ta2}', '${tb1}', '${tb2}')">Save Result</button>
+    </div>
+  `;
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function saveFixtureResultFromDB(fixtureId, date, ta1, ta2, tb1, tb2) {
+  const saRaw = parseInt(document.getElementById('fl_sa').value);
+  const sbRaw = parseInt(document.getElementById('fl_sb').value);
+
+  if (isNaN(saRaw) || isNaN(sbRaw)) { showToast('Enter both scores', true); return; }
+
+  try {
+    // Create match
+    const [match] = await supabase.post('matches', { played_on: date });
+
+    // Create entries for all 4 players
+    const entries = [
+      { player_id: state.players.find(p => p.name === ta1)?.id || ta1, points: saRaw, match_id: match.id },
+      { player_id: state.players.find(p => p.name === ta2)?.id || ta2, points: saRaw, match_id: match.id },
+      { player_id: state.players.find(p => p.name === tb1)?.id || tb1, points: sbRaw, match_id: match.id },
+      { player_id: state.players.find(p => p.name === tb2)?.id || tb2, points: sbRaw, match_id: match.id },
+    ];
+
+    await supabase.post('match_entries', entries);
+
+    // Update fixture with logged_match_id
+    await updateFixtureWithMatch(fixtureId, match.id);
+
+    await loadData();
+    renderLeaderboard();
+    renderLogScoresTab();
+    document.getElementById('fixtureLogOverlay')?.remove();
+    showToast('Result saved and fixture logged');
+  } catch(e) {
+    showToast('Error saving result', true);
+    console.error(e);
+  }
+}
+
 async function saveFixtureResult(roundIndex, fixtureIndex, date) {
   const round = state.allRounds?.[roundIndex];
   const f = round?.fixtures?.[fixtureIndex];
@@ -2532,12 +2512,121 @@ async function saveFixtureResult(roundIndex, fixtureIndex, date) {
     renderLeaderboard();
     renderAllRounds();
     renderPublicAllRounds();
+    renderLogScoresTab();
     document.getElementById('fixtureLogOverlay')?.remove();
     showToast(`Round ${round.roundNum} · Court ${f.court} saved`);
   } catch(e) {
     showToast('Error saving result', true);
     console.error(e);
   }
+}
+
+// ============================================================
+// HISTORIC RESULTS & ELITE STATUS RENDERING
+// ============================================================
+
+function renderHistoricResults() {
+  const el = document.getElementById('resultsRoot');
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const recentMatches = state.matches
+    .filter(m => new Date(m.played_on) >= sevenDaysAgo)
+    .sort((a, b) => new Date(b.played_on) - new Date(a.played_on));
+
+  if (recentMatches.length === 0) {
+    el.innerHTML = '<div class="fixture-empty">No matches in the last 7 days.</div>';
+    return;
+  }
+
+  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
+  const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
+  const skillClass = {1:'skill-1', 2:'skill-2', 3:'skill-3'};
+
+  // Group by date
+  const byDate = {};
+  recentMatches.forEach(m => {
+    if (!byDate[m.played_on]) byDate[m.played_on] = [];
+    byDate[m.played_on].push(m);
+  });
+
+  el.innerHTML = Object.entries(byDate).map(([date, matches]) => {
+    const dateObj = new Date(date);
+    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    const matchCards = matches.map(m => {
+      const entries = state.entries.filter(e => e.match_id === m.id);
+      const scores = [...new Set(entries.map(e => e.points))].sort((a,b) => b-a);
+
+      if (scores.length < 2) return '';
+
+      const teamA = entries.filter(e => e.points === scores[0]);
+      const teamB = entries.filter(e => e.points === scores[1]);
+
+      const teamName = t => t.map(e => {
+        const p = playerMap[e.player_id];
+        return `${p.name}<span class="skill-pill ${skillClass[p.skill_level||2]}">${skillLabels[p.skill_level||2]}</span>`;
+      }).join('<br>');
+
+      return `
+        <div style="border:1px solid var(--border);padding:0.75rem;margin-bottom:0.5rem;background:#0d0d0d;border-left:3px solid var(--espn-red);">
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0.5rem;align-items:center;">
+            <div class="court-team">${teamName(teamA)}</div>
+            <div style="font-family:'Anton',sans-serif;font-size:1.2rem;color:white;text-align:center;min-width:40px;">
+              <span style="color:var(--espn-red);font-weight:700;">${scores[0]}</span>
+              <span style="display:block;font-size:0.8rem;color:var(--text-muted);">–</span>
+              <span style="color:white;font-weight:700;">${scores[1]}</span>
+            </div>
+            <div class="court-team" style="text-align:right;">${teamName(teamB)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:1.5rem;">
+        <div class="section-label">${dateLabel}</div>
+        ${matchCards}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderEliteStatus() {
+  const el = document.getElementById('eliteRoot');
+  const flairs = calculateFlairs(state.selectedMonth);
+
+  // Collect all players with any flairs
+  const playersWithFlairs = Object.entries(flairs)
+    .filter(([pid, playerFlairs]) => playerFlairs.length > 0)
+    .sort((a, b) => b[1].length - a[1].length); // Sort by number of flairs
+
+  if (playersWithFlairs.length === 0) {
+    el.innerHTML = '<div class="fixture-empty">No flairs earned this month yet.</div>';
+    return;
+  }
+
+  el.innerHTML = playersWithFlairs.map(([pid, playerFlairs]) => {
+    const player = state.players.find(p => p.id === pid);
+    if (!player) return '';
+
+    const flairCards = playerFlairs.map(f => `
+      <div style="background:#0d0d0d;border:1px solid var(--border);border-left:3px solid var(--espn-red);padding:0.75rem;margin-bottom:0.5rem;">
+        <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.25rem;">${f.name}</div>
+        <div style="font-family:'Roboto',sans-serif;font-size:0.9rem;color:white;line-height:1.4;">${f.desc}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div style="background:rgba(255,26,26,0.05);border:1px solid var(--border);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-family:'Anton',sans-serif;font-size:1.2rem;letter-spacing:0.08em;color:white;text-transform:uppercase;margin-bottom:1rem;">
+          ${escHtml(player.name)}
+          <span style="font-size:0.8rem;color:var(--espn-red);margin-left:0.5rem;">(${playerFlairs.length} badge${playerFlairs.length>1?'s':''})</span>
+        </div>
+        ${flairCards}
+      </div>
+    `;
+  }).join('');
 }
 
 // ============================================================
@@ -2548,9 +2637,13 @@ function showPage(pageId, btn) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + pageId).classList.add('active');
   if (btn) btn.classList.add('active');
-  // Hide month selector on About and Fixtures pages
+  // Hide month selector on non-leaderboard pages
   const ms = document.getElementById('monthSelect');
-  if (ms) ms.style.display = (pageId === 'about' || pageId === 'fixtures') ? 'none' : '';
+  if (ms) ms.style.display = pageId === 'leaderboard' ? '' : 'none';
+  
+  // Render content for these pages
+  if (pageId === 'results') renderHistoricResults();
+  if (pageId === 'elite') renderEliteStatus();
 }
 
 // ============================================================
@@ -2633,17 +2726,18 @@ function populateTeamSelects() {
 }
 
 function switchTab(tabId, el) {
-  ['tabMatch','tabPlayers','tabFixtures','tabLog'].forEach(t => {
+  ['tabMatch','tabPlayers','tabFixtures','tabScores','tabLog'].forEach(t => {
     document.getElementById(t).style.display = t === tabId ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   if (tabId === 'tabLog') renderMatchHistory();
   if (tabId === 'tabFixtures') renderAdminChips();
+  if (tabId === 'tabScores') renderLogScoresTab();
 }
 
 // SUBMIT MATCH (doubles: Team A vs Team B, each player gets their team score)
-async function submitMatch(prefill = null) {
+async function submitMatch() {
   const date = document.getElementById('matchDate').value;
   if (!date) { showToast('Please select a date', true); return; }
 
@@ -2841,6 +2935,49 @@ async function renderMatchHistory() {
       </div>
     `;
   }).join('');
+}
+
+async function renderLogScoresTab() {
+  const el = document.getElementById('logScoresRoot');
+  el.innerHTML = '<div class="loading">LOADING...</div>';
+
+  try {
+    const sessionDate = new Date().toISOString().split('T')[0];
+    const pending = await loadPendingFixtures(sessionDate);
+
+    if (!pending || pending.length === 0) {
+      el.innerHTML = '<div class="fixture-empty">No pending fixtures for today. Generate fixtures in the Fixtures tab.</div>';
+      return;
+    }
+
+    el.innerHTML = pending.map((fixture, i) => {
+      const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
+      const skillClass = {1:'skill-1', 2:'skill-2', 3:'skill-3'};
+
+      return `
+        <div class="match-log-item" style="display:flex;justify-content:space-between;align-items:center;padding:1rem;border:1px solid var(--border);margin-bottom:0.75rem;background:#0d0d0d;">
+          <div style="flex:1;">
+            <div style="font-family:'Anton',sans-serif;font-size:0.9rem;letter-spacing:0.08em;color:white;margin-bottom:0.5rem;">Round ${fixture.round_no} · Court ${fixture.court_no}</div>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:center;">
+              <div class="court-team" style="text-align:left;font-size:0.85rem;">
+                ${fixture.team_a_player_1}<span class="skill-pill ${skillClass[2]}">${skillLabels[2]}</span><br>
+                ${fixture.team_a_player_2}<span class="skill-pill ${skillClass[2]}">${skillLabels[2]}</span>
+              </div>
+              <div style="color:var(--text-muted);font-size:0.8rem;font-weight:700;">VS</div>
+              <div class="court-team" style="text-align:right;font-size:0.85rem;">
+                ${fixture.team_b_player_1}<span class="skill-pill ${skillClass[2]}">${skillLabels[2]}</span><br>
+                ${fixture.team_b_player_2}<span class="skill-pill ${skillClass[2]}">${skillLabels[2]}</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:auto;padding:0.6rem 1.2rem;margin-left:1rem;flex-shrink:0;" onclick="openFixtureLogFromDB('${fixture.id}', ${fixture.round_no}, ${fixture.court_no}, '${fixture.team_a_player_1}', '${fixture.team_a_player_2}', '${fixture.team_b_player_1}', '${fixture.team_b_player_2}')">Log Score</button>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="fixture-empty">Error loading fixtures.</div>';
+    console.error(e);
+  }
 }
 
 async function deleteMatch(id) {
@@ -3113,6 +3250,245 @@ function showH2H(playerId, playerName) {
   }
 
   openOverlay('h2hOverlay');
+}
+
+// ============================================================
+// FIXTURE PERSISTENCE (Supabase)
+// ============================================================
+
+async function saveFixturesToDB(roundsData, sessionDate) {
+  // Save all fixtures to Supabase
+  try {
+    const fixtures = [];
+    roundsData.forEach((round, ri) => {
+      round.fixtures.forEach((fixture, fi) => {
+        fixtures.push({
+          fixture_date: sessionDate,
+          round_no: round.roundNum,
+          court_no: fixture.court,
+          team_a_player_1: fixture.teamA[0]?.name || '',
+          team_a_player_2: fixture.teamA[1]?.name || '',
+          team_b_player_1: fixture.teamB[0]?.name || '',
+          team_b_player_2: fixture.teamB[1]?.name || '',
+          team_a_score: null,
+          team_b_score: null,
+          logged_match_id: null
+        });
+      });
+    });
+
+    await supabase.post('fixtures', fixtures);
+    showToast('Fixtures saved to database');
+  } catch (e) {
+    showToast('Error saving fixtures', true);
+    console.error(e);
+  }
+}
+
+async function loadPendingFixtures(sessionDate) {
+  // Load pending (not yet logged) fixtures from DB
+  try {
+    const result = await supabase.query(
+      `fixtures?fixture_date=eq.${sessionDate}&logged_match_id=is.null&order=round_no,court_no`
+    );
+    return result || [];
+  } catch (e) {
+    console.error('Error loading fixtures:', e);
+    return [];
+  }
+}
+
+async function deleteFixtureFromDB(fixtureId) {
+  try {
+    await supabase.delete('fixtures', `id=eq.${fixtureId}`);
+    showToast('Fixture deleted');
+    renderLogScoresTab();
+  } catch (e) {
+    showToast('Error deleting fixture', true);
+  }
+}
+
+async function updateFixtureWithMatch(fixtureId, matchId) {
+  try {
+    await supabase.query(`fixtures?id=eq.${fixtureId}`, {
+      method: 'PATCH',
+      body: { logged_match_id: matchId },
+      prefer: 'return=minimal'
+    });
+  } catch (e) {
+    console.error('Error updating fixture:', e);
+  }
+}
+
+// ============================================================
+// PLAYER FLAIRS/ACHIEVEMENTS
+// ============================================================
+
+function calculateFlairs(forMonth) {
+  // Calculate all 5 flairs for all players in a given month
+  const monthMatches = state.matches.filter(m => {
+    const d = new Date(m.played_on);
+    const [yr, mo] = forMonth.split('-').map(Number);
+    return d.getFullYear() === yr && d.getMonth() + 1 === mo;
+  });
+
+  const matchIds = new Set(monthMatches.map(m => m.id));
+  const flairs = {}; // playerId -> array of flair objects
+
+  state.players.forEach(p => {
+    if (p.name !== 'Guest') flairs[p.id] = [];
+  });
+
+  // ── 1. CLUTCH MASTER: More than 5 wins by 2-point margin ──
+  const clutchWins = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') clutchWins[p.id] = 0; });
+
+  const allMatchIds = [...new Set(state.entries.map(e => e.match_id))];
+  allMatchIds.forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    if (entries.length < 2) return;
+    const scores = [...new Set(entries.map(e => e.points))];
+    if (scores.length < 2) return;
+    const maxScore = Math.max(...scores);
+    const minScore = Math.min(...scores);
+    if (maxScore - minScore === 2) {
+      entries.filter(e => e.points === maxScore).forEach(e => {
+        clutchWins[e.player_id] = (clutchWins[e.player_id] || 0) + 1;
+      });
+    }
+  });
+
+  Object.entries(clutchWins).forEach(([pid, count]) => {
+    if (count > 5) {
+      flairs[pid].push({ name: 'Clutch Master', desc: `${count} close wins (2-point margin)` });
+    }
+  });
+
+  // ── 2. STREAK KILLER: Ended a 3+ game winning streak ──
+  const streakKills = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') streakKills[p.id] = []; });
+
+  // Track streaks per player across all time, then check who broke them
+  const playerStreaks = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') playerStreaks[p.id] = 0; });
+
+  const sortedMatchIds = allMatchIds
+    .sort((a, b) => state.matches.find(m => m.id === a)?.played_on < state.matches.find(m => m.id === b)?.played_on ? -1 : 1);
+
+  sortedMatchIds.forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    if (entries.length < 2) return;
+    const scores = [...new Set(entries.map(e => e.points))];
+    if (scores.length < 2) return;
+    const maxScore = Math.max(...scores);
+    const winners = entries.filter(e => e.points === maxScore).map(e => e.player_id);
+    const losers = entries.filter(e => e.points !== maxScore).map(e => e.player_id);
+
+    winners.forEach(w => playerStreaks[w] = (playerStreaks[w] || 0) + 1);
+    losers.forEach(l => {
+      if (playerStreaks[l] >= 3) {
+        const streakVictim = Object.entries(playerStreaks).find(([pid, s]) => s >= 3 && losers.includes(pid))?.[0];
+        if (streakVictim) {
+          winners.forEach(w => {
+            if (!streakKills[w]) streakKills[w] = [];
+            streakKills[w].push(state.players.find(p => p.id === streakVictim)?.name || '?');
+          });
+        }
+      }
+      playerStreaks[l] = 0;
+    });
+  });
+
+  Object.entries(streakKills).forEach(([pid, victims]) => {
+    if (victims.length > 0) {
+      flairs[pid].push({ name: 'Streak Killer', desc: `Ended ${victims.length} winning streak${victims.length>1?'s':''}` });
+    }
+  });
+
+  // ── 3. BLOOD THIRSTY: Most wins in previous day ──
+  // For each day in month, count wins
+  const dayWins = {};
+  const today = new Date();
+  for (let d = 6; d >= 0; d--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - d);
+    const dateStr = date.toISOString().split('T')[0];
+    dayWins[dateStr] = {};
+    state.players.forEach(p => { if (p.name !== 'Guest') dayWins[dateStr][p.id] = 0; });
+
+    const dayMatches = state.matches.filter(m => m.played_on === dateStr);
+    dayMatches.forEach(m => {
+      const entries = state.entries.filter(e => e.match_id === m.id);
+      const scores = [...new Set(entries.map(e => e.points))];
+      if (scores.length >= 2) {
+        const maxScore = Math.max(...scores);
+        entries.filter(e => e.points === maxScore).forEach(e => {
+          dayWins[dateStr][e.player_id]++;
+        });
+      }
+    });
+  }
+
+  Object.entries(dayWins).forEach(([date, playerWins]) => {
+    const maxWins = Math.max(...Object.values(playerWins), 0);
+    if (maxWins > 0) {
+      Object.entries(playerWins).forEach(([pid, wins]) => {
+        if (wins === maxWins && wins > 0) {
+          flairs[pid].push({ name: 'Blood Thirsty', desc: `${wins} wins on ${date}` });
+        }
+      });
+    }
+  });
+
+  // ── 4. JACK OF ALL: Most different opponents ──
+  const opponents = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') opponents[p.id] = new Set(); });
+
+  allMatchIds.forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    const playerIds = [...new Set(entries.map(e => e.player_id))];
+    playerIds.forEach(p1 => {
+      playerIds.forEach(p2 => {
+        if (p1 !== p2 && opponents[p1]) opponents[p1].add(p2);
+      });
+    });
+  });
+
+  const maxOpponents = Math.max(...Object.values(opponents).map(s => s.size), 0);
+  Object.entries(opponents).forEach(([pid, oppSet]) => {
+    if (oppSet.size === maxOpponents && maxOpponents > 0) {
+      flairs[pid].push({ name: 'Jack of All', desc: `Played against ${oppSet.size} different opponents` });
+    }
+  });
+
+  // ── 5. PUNCHES ABOVE: Most matches vs higher skill level ──
+  const aboveSkill = {};
+  state.players.forEach(p => { if (p.name !== 'Guest') aboveSkill[p.id] = 0; });
+
+  allMatchIds.forEach(mid => {
+    const entries = state.entries.filter(e => e.match_id === mid);
+    const playerIds = [...new Set(entries.map(e => e.player_id))];
+    playerIds.forEach(p1 => {
+      const p1Skill = state.players.find(p => p.id === p1)?.skill_level || 2;
+      playerIds.forEach(p2 => {
+        if (p1 !== p2) {
+          const p2Skill = state.players.find(p => p.id === p2)?.skill_level || 2;
+          if (p2Skill > p1Skill) {
+            aboveSkill[p1]++;
+          }
+        }
+      });
+    });
+  });
+
+  const maxAbove = Math.max(...Object.values(aboveSkill), 0);
+  Object.entries(aboveSkill).forEach(([pid, count]) => {
+    if (count > 0 && count >= maxAbove * 0.8) { // Top performers only
+      flairs[pid].push({ name: 'Punches Above', desc: `${count} matches vs higher skill level` });
+    }
+  });
+
+  return flairs;
 }
 
 // ============================================================
