@@ -1144,12 +1144,12 @@
       flex-direction: column;
       background: #0a0a0a;
       border-bottom: 2px solid var(--espn-red);
-      display: none;
+      display: none !important;
       z-index: 1000;
     }
 
     .nav-tabs-container.open {
-      display: flex;
+      display: flex !important;
     }
 
     .nav-tab {
@@ -1186,7 +1186,7 @@
     }
 
     .player-name {
-      max-width: 120px;
+      max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -3534,15 +3534,173 @@ function calculateFlairs(forMonth) {
       if (p.name !== 'Guest') flairs[p.id] = [];
     });
 
-    // For now, show a placeholder message
-    // Full implementation will be added based on actual data structure
+    // Get all matches for the month
+    const monthMatches = state.matches.filter(m => {
+      const d = new Date(m.played_on);
+      const [yr, mo] = forMonth.split('-').map(Number);
+      return d.getFullYear() === yr && d.getMonth() + 1 === mo;
+    });
+
+    if (monthMatches.length === 0) return flairs;
+
+    const matchIds = new Set(monthMatches.map(m => m.id));
+
+    // ── CLUTCH MASTER: 2-point wins ──
+    const clutchWins = {};
+    state.players.forEach(p => { if (p.name !== 'Guest') clutchWins[p.id] = 0; });
+
+    monthMatches.forEach(match => {
+      const entries = state.entries.filter(e => e.match_id === match.id);
+      if (entries.length < 2) return;
+      
+      const scores = [...new Set(entries.map(e => e.points))];
+      if (scores.length < 2) return;
+      
+      const maxScore = Math.max(...scores);
+      const minScore = Math.min(...scores);
+      
+      if (maxScore - minScore === 2) {
+        entries.filter(e => e.points === maxScore).forEach(e => {
+          clutchWins[e.player_id] = (clutchWins[e.player_id] || 0) + 1;
+        });
+      }
+    });
+
+    Object.entries(clutchWins).forEach(([pid, count]) => {
+      if (count > 5) {
+        flairs[pid].push({ name: 'Clutch Master', desc: count + ' wins by 2-point margin' });
+      }
+    });
+
+    // ── STREAK KILLER: Broke a 3+ game winning streak ──
+    const streakBreakers = {};
+    state.players.forEach(p => { if (p.name !== 'Guest') streakBreakers[p.id] = 0; });
+
+    // Track streaks for each player
+    const playerWins = {};
+    state.players.forEach(p => { if (p.name !== 'Guest') playerWins[p.id] = 0; });
+
+    const sortedMatches = monthMatches.sort((a, b) => new Date(a.played_on) - new Date(b.played_on));
+    
+    sortedMatches.forEach(match => {
+      const entries = state.entries.filter(e => e.match_id === match.id);
+      const scores = [...new Set(entries.map(e => e.points))];
+      
+      if (scores.length >= 2) {
+        const maxScore = Math.max(...scores);
+        const winners = entries.filter(e => e.points === maxScore).map(e => e.player_id);
+        const losers = entries.filter(e => e.points < maxScore).map(e => e.player_id);
+
+        // Increment winner streaks
+        winners.forEach(w => playerWins[w] = (playerWins[w] || 0) + 1);
+        
+        // Check if any loser had a 3+ streak
+        losers.forEach(loser => {
+          if ((playerWins[loser] || 0) >= 3) {
+            winners.forEach(w => streakBreakers[w]++);
+          }
+          playerWins[loser] = 0; // Reset loser's streak
+        });
+      }
+    });
+
+    Object.entries(streakBreakers).forEach(([pid, count]) => {
+      if (count > 0) {
+        flairs[pid].push({ name: 'Streak Killer', desc: 'Broke ' + count + ' winning streak(s)' });
+      }
+    });
+
+    // ── BLOOD THIRSTY: Most wins in a day (last 7 days) ──
+    const dayWins = {};
+    const today = new Date();
+    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    for (let d = new Date(sevenDaysAgo); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = new Date(d).toISOString().split('T')[0];
+      dayWins[dateStr] = {};
+      state.players.forEach(p => { if (p.name !== 'Guest') dayWins[dateStr][p.id] = 0; });
+
+      const dayMatches = state.matches.filter(m => m.played_on === dateStr);
+      dayMatches.forEach(m => {
+        const entries = state.entries.filter(e => e.match_id === m.id);
+        const scores = [...new Set(entries.map(e => e.points))];
+        if (scores.length >= 2) {
+          const maxScore = Math.max(...scores);
+          entries.filter(e => e.points === maxScore).forEach(e => {
+            dayWins[dateStr][e.player_id]++;
+          });
+        }
+      });
+    }
+
+    Object.values(dayWins).forEach(playerWins => {
+      const maxWins = Math.max(...Object.values(playerWins), 0);
+      if (maxWins > 2) {
+        Object.entries(playerWins).forEach(([pid, wins]) => {
+          if (wins === maxWins && !flairs[pid].find(f => f.name === 'Blood Thirsty')) {
+            flairs[pid].push({ name: 'Blood Thirsty', desc: maxWins + ' wins in a single day' });
+          }
+        });
+      }
+    });
+
+    // ── JACK OF ALL: Most different opponents ──
+    const opponents = {};
+    state.players.forEach(p => { if (p.name !== 'Guest') opponents[p.id] = new Set(); });
+
+    monthMatches.forEach(match => {
+      const entries = state.entries.filter(e => e.match_id === match.id);
+      const playerIds = [...new Set(entries.map(e => e.player_id))];
+      playerIds.forEach(p1 => {
+        playerIds.forEach(p2 => {
+          if (p1 !== p2) opponents[p1]?.add(p2);
+        });
+      });
+    });
+
+    const maxOpponents = Math.max(...Object.values(opponents).map(s => s.size), 0);
+    if (maxOpponents > 0) {
+      Object.entries(opponents).forEach(([pid, oppSet]) => {
+        if (oppSet.size === maxOpponents && oppSet.size >= 5) {
+          flairs[pid].push({ name: 'Jack of All', desc: oppSet.size + ' different opponents this month' });
+        }
+      });
+    }
+
+    // ── PUNCHES ABOVE: Most matches vs higher skill ──
+    const aboveSkill = {};
+    state.players.forEach(p => { if (p.name !== 'Guest') aboveSkill[p.id] = 0; });
+
+    monthMatches.forEach(match => {
+      const entries = state.entries.filter(e => e.match_id === match.id);
+      const playerIds = [...new Set(entries.map(e => e.player_id))];
+      
+      playerIds.forEach(p1 => {
+        const p1Skill = state.players.find(p => p.id === p1)?.skill_level || 2;
+        playerIds.forEach(p2 => {
+          if (p1 !== p2) {
+            const p2Skill = state.players.find(p => p.id === p2)?.skill_level || 2;
+            if (p2Skill > p1Skill) aboveSkill[p1]++;
+          }
+        });
+      });
+    });
+
+    const maxAbove = Math.max(...Object.values(aboveSkill), 0);
+    if (maxAbove > 5) {
+      Object.entries(aboveSkill).forEach(([pid, count]) => {
+        if (count >= maxAbove * 0.7) {
+          flairs[pid].push({ name: 'Punches Above', desc: count + ' matches vs higher skill level' });
+        }
+      });
+    }
+
     return flairs;
   } catch (e) {
-    console.error('Flairs calculation error:', e);
+    console.error('Error calculating flairs:', e);
     return {};
   }
 }
-
 
 function toggleMobileNav() {
   const nav = document.getElementById('navTabs');
