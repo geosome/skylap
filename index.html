@@ -2735,7 +2735,7 @@ function renderHistoricResults() {
 
       const teamName = t => t.map(e => {
         const p = playerMap[e.player_id];
-        return `${p.name}<span class="skill-pill ${skillClass[p.skill_level||2]}">${skillLabels[p.skill_level||2]}</span>`;
+        return `${p.name}`;
       }).join('<br>');
 
       return `
@@ -3567,7 +3567,7 @@ function calculateFlairs(forMonth) {
     });
 
     Object.entries(clutchWins).forEach(([pid, count]) => {
-      if (count > 5) {
+      if (count >= 3) {
         flairs[pid].push({ name: 'Clutch Master', desc: count + ' wins by 2-point margin' });
       }
     });
@@ -3635,7 +3635,7 @@ function calculateFlairs(forMonth) {
 
     Object.values(dayWins).forEach(playerWins => {
       const maxWins = Math.max(...Object.values(playerWins), 0);
-      if (maxWins > 2) {
+      if (maxWins >= 2) {
         Object.entries(playerWins).forEach(([pid, wins]) => {
           if (wins === maxWins && !flairs[pid].find(f => f.name === 'Blood Thirsty')) {
             flairs[pid].push({ name: 'Blood Thirsty', desc: maxWins + ' wins in a single day' });
@@ -3661,7 +3661,7 @@ function calculateFlairs(forMonth) {
     const maxOpponents = Math.max(...Object.values(opponents).map(s => s.size), 0);
     if (maxOpponents > 0) {
       Object.entries(opponents).forEach(([pid, oppSet]) => {
-        if (oppSet.size === maxOpponents && oppSet.size >= 5) {
+        if (oppSet.size >= 4) {
           flairs[pid].push({ name: 'Jack of All', desc: oppSet.size + ' different opponents this month' });
         }
       });
@@ -3687,9 +3687,9 @@ function calculateFlairs(forMonth) {
     });
 
     const maxAbove = Math.max(...Object.values(aboveSkill), 0);
-    if (maxAbove > 5) {
+    if (maxAbove >= 3) {
       Object.entries(aboveSkill).forEach(([pid, count]) => {
-        if (count >= maxAbove * 0.7) {
+        if (count >= 3) {
           flairs[pid].push({ name: 'Punches Above', desc: count + ' matches vs higher skill level' });
         }
       });
