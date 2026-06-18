@@ -3533,12 +3533,6 @@ function calculateFlairs(forMonth) {
     state.players.forEach(p => {
       if (p.name !== 'Guest') flairs[p.id] = [];
     });
-    
-    // Safety: ensure all entry player_ids have a flairs array
-    const ensureFlair = (pid) => {
-      if (!flairs[pid]) flairs[pid] = [];
-      return flairs[pid];
-    };
 
     // Get all matches for the month
     const monthMatches = state.matches.filter(m => {
@@ -3567,14 +3561,14 @@ function calculateFlairs(forMonth) {
       
       if (maxScore - minScore === 2) {
         entries.filter(e => e.points === maxScore).forEach(e => {
-          if (e.player_id) clutchWins[e.player_id] = (clutchWins[e.player_id] || 0) + 1;
+          clutchWins[e.player_id] = (clutchWins[e.player_id] || 0) + 1;
         });
       }
     });
 
     Object.entries(clutchWins).forEach(([pid, count]) => {
       if (count > 5) {
-        ensureFlair(pid).push({ name: 'Clutch Master', desc: count + ' wins by 2-point margin' });
+        flairs[pid].push({ name: 'Clutch Master', desc: count + ' wins by 2-point margin' });
       }
     });
 
@@ -3612,7 +3606,7 @@ function calculateFlairs(forMonth) {
 
     Object.entries(streakBreakers).forEach(([pid, count]) => {
       if (count > 0) {
-        ensureFlair(pid).push({ name: 'Streak Killer', desc: 'Broke ' + count + ' winning streak(s)' });
+        flairs[pid].push({ name: 'Streak Killer', desc: 'Broke ' + count + ' winning streak(s)' });
       }
     });
 
@@ -3644,7 +3638,7 @@ function calculateFlairs(forMonth) {
       if (maxWins > 2) {
         Object.entries(playerWins).forEach(([pid, wins]) => {
           if (wins === maxWins && !flairs[pid].find(f => f.name === 'Blood Thirsty')) {
-            ensureFlair(pid).push({ name: 'Blood Thirsty', desc: maxWins + ' wins in a single day' });
+            flairs[pid].push({ name: 'Blood Thirsty', desc: maxWins + ' wins in a single day' });
           }
         });
       }
@@ -3668,7 +3662,7 @@ function calculateFlairs(forMonth) {
     if (maxOpponents > 0) {
       Object.entries(opponents).forEach(([pid, oppSet]) => {
         if (oppSet.size === maxOpponents && oppSet.size >= 5) {
-          ensureFlair(pid).push({ name: 'Jack of All', desc: oppSet.size + ' different opponents this month' });
+          flairs[pid].push({ name: 'Jack of All', desc: oppSet.size + ' different opponents this month' });
         }
       });
     }
@@ -3696,7 +3690,7 @@ function calculateFlairs(forMonth) {
     if (maxAbove > 5) {
       Object.entries(aboveSkill).forEach(([pid, count]) => {
         if (count >= maxAbove * 0.7) {
-          ensureFlair(pid).push({ name: 'Punches Above', desc: count + ' matches vs higher skill level' });
+          flairs[pid].push({ name: 'Punches Above', desc: count + ' matches vs higher skill level' });
         }
       });
     }
