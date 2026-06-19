@@ -1186,7 +1186,7 @@
     }
 
     .player-name {
-      max-width: 120px;
+      max-width: 140px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -1270,7 +1270,7 @@
     }
 
     .player-name {
-      max-width: 80px;
+      max-width: 110px;
     }
 
     .skill-pill {
@@ -2384,7 +2384,7 @@ async function generateFixtures() {
 
     playing.forEach(p => playCounts[p.id]++);
 
-    const sorted = [...playing].sort((a, b) => (a.skilllevel || 2) - (b.skilllevel || 2));
+    const sorted = [...playing].sort((a, b) => (a.skill_level || 2) - (b.skill_level || 2));
     const courts = [];
 
     for (let c = 0; c < actualCourts; c++) {
@@ -2710,8 +2710,6 @@ function renderHistoricResults() {
   }
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
-  const skillLabels = {1:'L1', 2:'L2', 3:'L3'};
-  const skillClass = {1:'skill-1', 2:'skill-2', 3:'skill-3'};
 
   // Group by date
   const byDate = {};
@@ -2735,7 +2733,7 @@ function renderHistoricResults() {
 
       const teamName = t => t.map(e => {
         const p = playerMap[e.player_id];
-        return `${p.name}<span class="skill-pill ${skillClass[p.skill_level||2]}">${skillLabels[p.skill_level||2]}</span>`;
+        return escHtml(p ? p.name : '?');
       }).join('<br>');
 
       return `
@@ -2769,50 +2767,150 @@ function renderEliteStatus() {
   try {
     const flairs = calculateFlairs(state.selectedMonth);
 
-    // Collect all players with any flairs
     const playersWithFlairs = Object.entries(flairs)
-      .filter(([pid, playerFlairs]) => playerFlairs && Array.isArray(playerFlairs) && playerFlairs.length > 0)
-      .sort((a, b) => b[1].length - a[1].length); // Sort by number of flairs
+      .filter(([pid, playerFlairs]) => playerFlairs && Array.isArray(playerFlairs) && playerFlairs.length > 0);
 
     if (playersWithFlairs.length === 0) {
       el.innerHTML = `
         <div style="text-align:center;padding:2rem;">
           <div style="font-family:'Anton',sans-serif;font-size:1.5rem;color:var(--text-muted);margin-bottom:1rem;">🏆</div>
-          <div style="font-family:'Roboto Condensed',sans-serif;font-size:1rem;color:var(--text-muted);">Elite badges will appear here as players unlock achievements.</div>
-          <div style="font-family:'Roboto',sans-serif;font-size:0.85rem;color:var(--text-dim);margin-top:1rem;line-height:1.6;">
-            Badges are earned through:<br>
-            • Clutch Master: 5+ close wins<br>
-            • Streak Killer: Ending 3-game streaks<br>
-            • Blood Thirsty: Most wins in a day<br>
-            • Jack of All: Most opponents<br>
-            • Punches Above: Beating higher skill levels
+          <div style="font-family:'Roboto Condensed',sans-serif;font-size:1rem;color:var(--text-muted);margin-bottom:2rem;">No elite badges earned yet</div>
+          <div style="font-family:'Roboto',sans-serif;font-size:0.9rem;color:var(--text-dim);text-align:left;max-width:400px;margin:0 auto;line-height:1.8;">
+            <div style="margin-bottom:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.8rem;">
+              <strong style="color:white;">🔥 Clutch Master</strong><br>
+              Most wins by 2-point margin
+            </div>
+            <div style="margin-bottom:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.8rem;">
+              <strong style="color:white;">⚔️ Streak Killer</strong><br>
+              Ending the most 3-game winning streaks
+            </div>
+            <div style="margin-bottom:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.8rem;">
+              <strong style="color:white;">🩸 Blood Thirsty</strong><br>
+              Most wins in a single day
+            </div>
+            <div style="margin-bottom:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.8rem;">
+              <strong style="color:white;">🎯 Jack of All</strong><br>
+              Most different opponents
+            </div>
+            <div>
+              <strong style="color:white;">📈 Punches Above</strong><br>
+              Most matches vs higher skill levels
+            </div>
           </div>
         </div>
       `;
       return;
     }
 
-    el.innerHTML = playersWithFlairs.map(([pid, playerFlairs]) => {
+    // Group by flair type so each badge gets its own card with the top player(s)
+    const flairsByType = {};
+    playersWithFlairs.forEach(([pid, list]) => {
       const player = state.players.find(p => p.id === pid);
-      if (!player) return '';
+      if (!player) return;
+      list.forEach(flair => {
+        if (!flairsByType[flair.name]) flairsByType[flair.name] = [];
+        flairsByType[flair.name].push({ player, desc: flair.desc });
+      });
+    });
 
-      const flairCards = playerFlairs.map(f => `
-        <div style="background:#0d0d0d;border:1px solid var(--border);border-left:3px solid var(--espn-red);padding:0.75rem;margin-bottom:0.5rem;">
-          <div style="font-family:'Roboto Condensed',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;color:var(--espn-red);text-transform:uppercase;margin-bottom:0.25rem;">${f.name}</div>
-          <div style="font-family:'Roboto',sans-serif;font-size:0.9rem;color:white;line-height:1.4;">${f.desc}</div>
-        </div>
-      `).join('');
+    const flairStyles = {
+      'Clutch Master':  { icon: '🔥', color: '#ff6b6b', accent: '#cc0000' },
+      'Streak Killer':  { icon: '⚔️', color: '#ffd700', accent: '#cc0000' },
+      'Blood Thirsty':  { icon: '🩸', color: '#ff4444', accent: '#990000' },
+      'Jack of All':    { icon: '🎯', color: '#4a9eff', accent: '#0066cc' },
+      'Punches Above':  { icon: '📈', color: '#66ff66', accent: '#00cc00' }
+    };
 
-      return `
-        <div style="background:rgba(255,26,26,0.05);border:1px solid var(--border);padding:1.25rem;margin-bottom:1rem;">
-          <div style="font-family:'Anton',sans-serif;font-size:1.2rem;letter-spacing:0.08em;color:white;text-transform:uppercase;margin-bottom:1rem;">
-            ${escHtml(player.name)}
-            <span style="font-size:0.8rem;color:var(--espn-red);margin-left:0.5rem;">(${playerFlairs.length} badge${playerFlairs.length>1?'s':''})</span>
+    // Keep a stable, sensible order regardless of object key order
+    const order = ['Clutch Master', 'Streak Killer', 'Blood Thirsty', 'Jack of All', 'Punches Above'];
+
+    el.innerHTML = order
+      .filter(name => flairsByType[name] && flairsByType[name].length > 0)
+      .map(flairName => {
+        const players = flairsByType[flairName];
+        const style = flairStyles[flairName] || { icon: '🏆', color: '#cc0000', accent: '#880000' };
+        const topPlayer = players[0];
+
+        return `
+          <div style="
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 100%);
+            border: 2px solid ${style.color};
+            border-left: 5px solid ${style.accent};
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            box-shadow: 0 0 20px rgba(204, 0, 0, 0.15);
+          ">
+            <div style="position: absolute; top: 10px; right: 10px; font-size: 2rem; opacity: 0.2;">${style.icon}</div>
+
+            <div style="
+              font-family: 'Anton', sans-serif;
+              font-size: 1.1rem;
+              letter-spacing: 0.15em;
+              color: ${style.color};
+              text-transform: uppercase;
+              margin-bottom: 0.3rem;
+              text-shadow: 0 0 10px rgba(204, 0, 0, 0.3);
+            ">
+              ${style.icon} ${flairName}
+            </div>
+
+            <div style="height: 1px; background: linear-gradient(90deg, ${style.color}, transparent); margin-bottom: 1rem;"></div>
+
+            <div style="
+              background: rgba(0, 0, 0, 0.5);
+              border: 1px solid ${style.color};
+              border-radius: 2px;
+              padding: 1rem;
+              margin-bottom: 0.5rem;
+            ">
+              <div style="
+                font-family: 'Roboto Condensed', sans-serif;
+                font-size: 0.7rem;
+                letter-spacing: 0.2em;
+                color: ${style.color};
+                text-transform: uppercase;
+                margin-bottom: 0.5rem;
+              ">
+                ★ BOSS ★
+              </div>
+
+              <div style="
+                font-family: 'Anton', sans-serif;
+                font-size: 1.3rem;
+                color: white;
+                margin-bottom: 0.5rem;
+                letter-spacing: 0.05em;
+              ">
+                ${escHtml(topPlayer.player.name)}
+              </div>
+
+              <div style="
+                font-family: 'Roboto', sans-serif;
+                font-size: 0.9rem;
+                color: #ccc;
+                line-height: 1.5;
+                font-style: italic;
+              ">
+                ${topPlayer.desc}
+              </div>
+            </div>
+
+            ${players.length > 1 ? `
+              <div style="
+                font-family: 'Roboto Condensed', sans-serif;
+                font-size: 0.75rem;
+                color: var(--text-dim);
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
+                border-top: 1px dashed var(--border);
+              ">
+                ${players.length - 1} other player${players.length - 1 > 1 ? 's' : ''} also qualified: ${players.slice(1).map(p => escHtml(p.player.name)).join(', ')}
+              </div>
+            ` : ''}
           </div>
-          ${flairCards}
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
   } catch (e) {
     el.innerHTML = '<div class="fixture-empty">Error loading elite status.</div>';
     console.error(e);
@@ -3528,13 +3626,26 @@ async function updateFixtureWithMatch(fixtureId, matchId) {
 function calculateFlairs(forMonth) {
   try {
     if (!state.matches || !state.entries || !state.players) return {};
-    
+
     const flairs = {};
     state.players.forEach(p => {
       if (p.name !== 'Guest') flairs[p.id] = [];
     });
 
-    // Get all matches for the month
+    const ensureFlair = (pid) => {
+      if (!flairs[pid]) flairs[pid] = [];
+      return flairs[pid];
+    };
+
+    const initCounts = () => {
+      const counts = {};
+      state.players.forEach(p => {
+        if (p.name !== 'Guest') counts[p.id] = 0;
+      });
+      return counts;
+    };
+
+    // Get all matches for the selected month
     const monthMatches = state.matches.filter(m => {
       const d = new Date(m.played_on);
       const [yr, mo] = forMonth.split('-').map(Number);
@@ -3543,108 +3654,103 @@ function calculateFlairs(forMonth) {
 
     if (monthMatches.length === 0) return flairs;
 
-    const matchIds = new Set(monthMatches.map(m => m.id));
-
-    // ── CLUTCH MASTER: 2-point wins ──
-    const clutchWins = {};
-    state.players.forEach(p => { if (p.name !== 'Guest') clutchWins[p.id] = 0; });
+    // ── CLUTCH MASTER: most wins by exactly 2-point margin (min 3) ──
+    const clutchWins = initCounts();
 
     monthMatches.forEach(match => {
       const entries = state.entries.filter(e => e.match_id === match.id);
       if (entries.length < 2) return;
-      
+
       const scores = [...new Set(entries.map(e => e.points))];
       if (scores.length < 2) return;
-      
+
       const maxScore = Math.max(...scores);
       const minScore = Math.min(...scores);
-      
+
       if (maxScore - minScore === 2) {
         entries.filter(e => e.points === maxScore).forEach(e => {
-          clutchWins[e.player_id] = (clutchWins[e.player_id] || 0) + 1;
+          if (e.player_id) clutchWins[e.player_id] = (clutchWins[e.player_id] || 0) + 1;
         });
       }
     });
 
-    Object.entries(clutchWins).forEach(([pid, count]) => {
-      if (count > 5) {
-        flairs[pid].push({ name: 'Clutch Master', desc: count + ' wins by 2-point margin' });
-      }
-    });
+    const maxClutch = Math.max(...Object.values(clutchWins), 0);
+    if (maxClutch >= 3) {
+      Object.entries(clutchWins).forEach(([pid, count]) => {
+        if (count === maxClutch) {
+          ensureFlair(pid).push({ name: 'Clutch Master', desc: count + ' wins by 2-point margin' });
+        }
+      });
+    }
 
-    // ── STREAK KILLER: Broke a 3+ game winning streak ──
-    const streakBreakers = {};
-    state.players.forEach(p => { if (p.name !== 'Guest') streakBreakers[p.id] = 0; });
+    // ── STREAK KILLER: broke a 3+ game winning streak (most streaks broken) ──
+    const streakBreakers = initCounts();
+    const playerWins = initCounts();
 
-    // Track streaks for each player
-    const playerWins = {};
-    state.players.forEach(p => { if (p.name !== 'Guest') playerWins[p.id] = 0; });
+    const sortedMatches = [...monthMatches].sort((a, b) => new Date(a.played_on) - new Date(b.played_on));
 
-    const sortedMatches = monthMatches.sort((a, b) => new Date(a.played_on) - new Date(b.played_on));
-    
     sortedMatches.forEach(match => {
       const entries = state.entries.filter(e => e.match_id === match.id);
       const scores = [...new Set(entries.map(e => e.points))];
-      
+
       if (scores.length >= 2) {
         const maxScore = Math.max(...scores);
         const winners = entries.filter(e => e.points === maxScore).map(e => e.player_id);
         const losers = entries.filter(e => e.points < maxScore).map(e => e.player_id);
 
-        // Increment winner streaks
-        winners.forEach(w => playerWins[w] = (playerWins[w] || 0) + 1);
-        
-        // Check if any loser had a 3+ streak
+        winners.forEach(w => { if (playerWins.hasOwnProperty(w)) playerWins[w] = (playerWins[w] || 0) + 1; });
+
         losers.forEach(loser => {
           if ((playerWins[loser] || 0) >= 3) {
-            winners.forEach(w => streakBreakers[w]++);
+            winners.forEach(w => { if (streakBreakers.hasOwnProperty(w)) streakBreakers[w]++; });
           }
-          playerWins[loser] = 0; // Reset loser's streak
+          if (playerWins.hasOwnProperty(loser)) playerWins[loser] = 0;
         });
       }
     });
 
-    Object.entries(streakBreakers).forEach(([pid, count]) => {
-      if (count > 0) {
-        flairs[pid].push({ name: 'Streak Killer', desc: 'Broke ' + count + ' winning streak(s)' });
-      }
-    });
-
-    // ── BLOOD THIRSTY: Most wins in a day (last 7 days) ──
-    const dayWins = {};
-    const today = new Date();
-    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    for (let d = new Date(sevenDaysAgo); d <= today; d.setDate(d.getDate() + 1)) {
-      const dateStr = new Date(d).toISOString().split('T')[0];
-      dayWins[dateStr] = {};
-      state.players.forEach(p => { if (p.name !== 'Guest') dayWins[dateStr][p.id] = 0; });
-
-      const dayMatches = state.matches.filter(m => m.played_on === dateStr);
-      dayMatches.forEach(m => {
-        const entries = state.entries.filter(e => e.match_id === m.id);
-        const scores = [...new Set(entries.map(e => e.points))];
-        if (scores.length >= 2) {
-          const maxScore = Math.max(...scores);
-          entries.filter(e => e.points === maxScore).forEach(e => {
-            dayWins[dateStr][e.player_id]++;
-          });
+    const maxStreakBreaks = Math.max(...Object.values(streakBreakers), 0);
+    if (maxStreakBreaks >= 1) {
+      Object.entries(streakBreakers).forEach(([pid, count]) => {
+        if (count === maxStreakBreaks) {
+          ensureFlair(pid).push({ name: 'Streak Killer', desc: 'Broke ' + count + ' winning streak' + (count > 1 ? 's' : '') });
         }
       });
     }
 
-    Object.values(dayWins).forEach(playerWins => {
-      const maxWins = Math.max(...Object.values(playerWins), 0);
-      if (maxWins > 2) {
-        Object.entries(playerWins).forEach(([pid, wins]) => {
-          if (wins === maxWins && !flairs[pid].find(f => f.name === 'Blood Thirsty')) {
-            flairs[pid].push({ name: 'Blood Thirsty', desc: maxWins + ' wins in a single day' });
-          }
+    // ── BLOOD THIRSTY: most wins in a single day this month ──
+    const dayWins = {};
+    monthMatches.forEach(match => {
+      const dateStr = match.played_on;
+      if (!dayWins[dateStr]) dayWins[dateStr] = initCounts();
+
+      const entries = state.entries.filter(e => e.match_id === match.id);
+      const scores = [...new Set(entries.map(e => e.points))];
+      if (scores.length >= 2) {
+        const maxScore = Math.max(...scores);
+        entries.filter(e => e.points === maxScore).forEach(e => {
+          if (dayWins[dateStr].hasOwnProperty(e.player_id)) dayWins[dateStr][e.player_id]++;
         });
       }
     });
 
-    // ── JACK OF ALL: Most different opponents ──
+    const bestDays = initCounts();
+    Object.values(dayWins).forEach(playerWins2 => {
+      Object.entries(playerWins2).forEach(([pid, wins]) => {
+        if (bestDays.hasOwnProperty(pid) && wins > (bestDays[pid] || 0)) bestDays[pid] = wins;
+      });
+    });
+
+    const maxDayWins = Math.max(...Object.values(bestDays), 0);
+    if (maxDayWins >= 2) {
+      Object.entries(bestDays).forEach(([pid, wins]) => {
+        if (wins === maxDayWins) {
+          ensureFlair(pid).push({ name: 'Blood Thirsty', desc: wins + ' wins in a single day' });
+        }
+      });
+    }
+
+    // ── JACK OF ALL: most different opponents this month ──
     const opponents = {};
     state.players.forEach(p => { if (p.name !== 'Guest') opponents[p.id] = new Set(); });
 
@@ -3653,44 +3759,43 @@ function calculateFlairs(forMonth) {
       const playerIds = [...new Set(entries.map(e => e.player_id))];
       playerIds.forEach(p1 => {
         playerIds.forEach(p2 => {
-          if (p1 !== p2) opponents[p1]?.add(p2);
+          if (p1 !== p2 && opponents[p1]) opponents[p1].add(p2);
         });
       });
     });
 
     const maxOpponents = Math.max(...Object.values(opponents).map(s => s.size), 0);
-    if (maxOpponents > 0) {
+    if (maxOpponents >= 3) {
       Object.entries(opponents).forEach(([pid, oppSet]) => {
-        if (oppSet.size === maxOpponents && oppSet.size >= 5) {
-          flairs[pid].push({ name: 'Jack of All', desc: oppSet.size + ' different opponents this month' });
+        if (oppSet.size === maxOpponents) {
+          ensureFlair(pid).push({ name: 'Jack of All', desc: oppSet.size + ' different opponents' });
         }
       });
     }
 
-    // ── PUNCHES ABOVE: Most matches vs higher skill ──
-    const aboveSkill = {};
-    state.players.forEach(p => { if (p.name !== 'Guest') aboveSkill[p.id] = 0; });
+    // ── PUNCHES ABOVE: most matches played vs a higher skill level ──
+    const aboveSkill = initCounts();
 
     monthMatches.forEach(match => {
       const entries = state.entries.filter(e => e.match_id === match.id);
       const playerIds = [...new Set(entries.map(e => e.player_id))];
-      
+
       playerIds.forEach(p1 => {
         const p1Skill = state.players.find(p => p.id === p1)?.skill_level || 2;
         playerIds.forEach(p2 => {
           if (p1 !== p2) {
             const p2Skill = state.players.find(p => p.id === p2)?.skill_level || 2;
-            if (p2Skill > p1Skill) aboveSkill[p1]++;
+            if (p2Skill > p1Skill && aboveSkill.hasOwnProperty(p1)) aboveSkill[p1]++;
           }
         });
       });
     });
 
     const maxAbove = Math.max(...Object.values(aboveSkill), 0);
-    if (maxAbove > 5) {
+    if (maxAbove >= 2) {
       Object.entries(aboveSkill).forEach(([pid, count]) => {
-        if (count >= maxAbove * 0.7) {
-          flairs[pid].push({ name: 'Punches Above', desc: count + ' matches vs higher skill level' });
+        if (count === maxAbove) {
+          ensureFlair(pid).push({ name: 'Punches Above', desc: count + ' matches vs higher skill level' });
         }
       });
     }
