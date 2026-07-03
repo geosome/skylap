@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Court Club — Monthly Leaderboard</title>
+<title>Dragon Badminton — Monthly Leaderboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1107,7 +1107,6 @@
   /* RESPONSIVE */
   @media (max-width: 600px) {
     header { padding: 0 1rem; height: auto; min-height: 56px; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem 1rem; }
-    .nav-tabs { display: none; }
     .board th:nth-child(5), .board td:nth-child(5) { display: none; }
     .stat-value { font-size: 1.6rem; }
     .hero-title { font-size: 1.4rem; }
@@ -1120,51 +1119,55 @@
     background: none;
     border: none;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     cursor: pointer;
-    padding: 0.5rem;
-  }
-
-  .nav-tabs-container {
-    display: flex;
-    flex-direction: row;
-    gap: 0;
+    padding: 0.4rem 0.6rem;
+    line-height: 1;
   }
 
   @media (max-width: 768px) {
     .hamburger {
       display: block;
+      order: 2;
     }
 
-    .nav-tabs-container {
-      position: absolute;
-      top: 3.5rem;
+    #navTabs {
+      position: fixed;
+      top: 0;
       left: 0;
       right: 0;
+      bottom: 0;
       flex-direction: column;
-      background: #0a0a0a;
+      background: rgba(0,0,0,0.97);
       border-bottom: 2px solid var(--espn-red);
       display: none !important;
-      z-index: 1000;
+      z-index: 9999;
+      padding-top: 3.5rem;
+      overflow-y: auto;
     }
 
-    .nav-tabs-container.open {
+    #navTabs.open {
       display: flex !important;
     }
 
     .nav-tab {
       width: 100%;
       text-align: left;
-      padding: 1rem;
+      padding: 1.2rem 1.5rem;
       border: none;
       border-bottom: 1px solid var(--border);
-      font-size: 0.95rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
 
     .nav-tab.active {
       background: #1a1a1a;
-      border-left: 3px solid var(--espn-red);
+      border-left: 4px solid var(--espn-red);
+      color: var(--espn-red);
     }
+
+    .month-select { font-size: 0.8rem; }
 
     /* Page content responsive */
     .page {
@@ -1328,17 +1331,18 @@
       </svg>
     </div>
     <div class="logo">
-      Court Club
+      Dragon Badminton
       <span>Badminton · Monthly Standings</span>
     </div>
   </div>
   <div class="header-right">
-    <nav class="nav-tabs">
-      <button class="nav-tab active" onclick="showPage('leaderboard', this)">Standings</button>
-      <button class="nav-tab" onclick="showPage('fixtures', this)">Fixtures</button>
-      <button class="nav-tab" onclick="showPage('results', this)">Results</button>
-      <button class="nav-tab" onclick="showPage('elite', this)">Elite Status</button>
-      <button class="nav-tab" onclick="showPage('about', this)">About</button>
+    <button id="hamburger" class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <nav class="nav-tabs" id="navTabs">
+      <button class="nav-tab active" onclick="showPage('leaderboard', this); closeMobileNav()">Standings</button>
+      <button class="nav-tab" onclick="showPage('fixtures', this); closeMobileNav()">Fixtures</button>
+      <button class="nav-tab" onclick="showPage('results', this); closeMobileNav()">Results</button>
+      <button class="nav-tab" onclick="showPage('elite', this); closeMobileNav()">Elite Status</button>
+      <button class="nav-tab" onclick="showPage('about', this); closeMobileNav()">About</button>
     </nav>
     <select class="month-select" id="monthSelect"></select>
     <button class="btn-admin" id="adminBtn">⚙ Admin</button>
@@ -1387,15 +1391,15 @@
   <!-- ABOUT PAGE -->
   <div id="page-about" class="page">
     <div class="hero-band">
-      <div class="hero-month">Court Club Badminton</div>
+      <div class="hero-month">Dragon Badminton</div>
       <div class="hero-title">How It Works</div>
     </div>
     <div class="about-section">
 
       <div class="section-label" style="margin-bottom:1rem;">The League</div>
       <div class="about-card">
-        <h3><span class="icon">01</span> What is Court Club?</h3>
-        <p>Court Club is a friendly local badminton club tracking monthly standings across two courts. Up to 8 regular players compete in doubles matches each session, with standings updated after every game. A fresh leaderboard resets each month — keeping competition alive all year round.</p>
+        <h3><span class="icon">01</span> What is Dragon Badminton?</h3>
+        <p>Dragon Badminton is a friendly local badminton club tracking monthly standings across two courts. Up to 8 regular players compete in doubles matches each session, with standings updated after every game. A fresh leaderboard resets each month — keeping competition alive all year round.</p>
       </div>
 
       <div class="section-label" style="margin-bottom:1rem;margin-top:1.5rem;">Scoring System</div>
@@ -3475,8 +3479,8 @@ async function shareStandings() {
       // Try native share (mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: `Court Club — ${monthText} Standings`,
-          text: `🏸 Court Club standings for ${monthText}`,
+          title: `Dragon Badminton — ${monthText} Standings`,
+          text: `🏸 Dragon Badminton standings for ${monthText}`,
           files: [file]
         });
       } else {
@@ -3813,7 +3817,7 @@ function toggleMobileNav() {
   if (!nav) return;
   nav.classList.toggle('open');
   const isOpen = nav.classList.contains('open');
-  hamburger.textContent = isOpen ? '✕' : '☰';
+  if (hamburger) hamburger.textContent = isOpen ? '✕' : '☰';
 }
 
 function closeMobileNav() {
@@ -3822,6 +3826,16 @@ function closeMobileNav() {
   if (nav) nav.classList.remove('open');
   if (hamburger) hamburger.textContent = '☰';
 }
+
+// Close nav when tapping outside
+document.addEventListener('click', e => {
+  const nav = document.getElementById('navTabs');
+  const hamburger = document.getElementById('hamburger');
+  if (nav && nav.classList.contains('open') &&
+      !nav.contains(e.target) && e.target !== hamburger) {
+    closeMobileNav();
+  }
+});
 
 // ============================================================
 // HELPERS
