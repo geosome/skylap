@@ -1292,23 +1292,144 @@
 <body>
 
 <!-- SPLASH SCREEN -->
-<div id="splash" style="
-  position:fixed;inset:0;background:#0d0d0d;z-index:9999;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;overflow:hidden;
-">
-  <div id="splashOverlay" style="position:absolute;inset:0;background:var(--espn-red);opacity:0;pointer-events:none;"></div>
-  <div id="splashCount" style="
-    font-family:'Anton',sans-serif;font-size:clamp(6rem,20vw,12rem);
-    color:white;line-height:1;letter-spacing:-0.02em;
-    opacity:0;transform:scale(1.4);transition:none;
-    text-shadow:0 0 60px rgba(204,0,0,0.8);
-  ">3</div>
-  <div id="splashSub" style="
-    font-family:'Roboto Condensed',sans-serif;font-size:1rem;
-    font-weight:700;letter-spacing:0.4em;text-transform:uppercase;
-    color:var(--text-muted);margin-top:1rem;opacity:0;
-  ">COURT CLUB</div>
+<div id="splash" style="position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+
+  <!-- Ambient fog layers -->
+  <div id="fogA" style="position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(ellipse,rgba(120,0,0,0.35) 0%,transparent 70%);opacity:0;transform:scale(0.5);pointer-events:none;"></div>
+  <div id="fogB" style="position:absolute;inset:-10%;border-radius:50%;background:radial-gradient(ellipse,rgba(80,0,0,0.25) 0%,transparent 60%);opacity:0;transform:scale(0.3);pointer-events:none;"></div>
+
+  <!-- Dragon SVG -->
+  <div id="dragonWrap" style="position:relative;width:min(90vw,520px);opacity:0;transform:scale(0.4) translateY(60px);">
+    <svg id="dragonSvg" viewBox="0 0 520 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;overflow:visible;">
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="eyeglow" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="bodyGrad" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#1a1a1a"/>
+          <stop offset="100%" stop-color="#050505"/>
+        </radialGradient>
+      </defs>
+
+      <!-- ── LEFT WING (unfurls outward) ── -->
+      <g id="wingLeft" style="transform-origin:205px 195px;transform:rotate(40deg) scaleX(0.1);opacity:0;">
+        <!-- Main wing membrane -->
+        <path d="M205,195 C160,180 80,120 20,60 C10,50 5,35 15,30 C25,25 40,35 55,55 C90,100 130,140 175,165 C185,170 200,180 205,195Z" fill="#0d0d0d" stroke="#1a1a1a" stroke-width="1"/>
+        <!-- Wing ribs -->
+        <path d="M205,195 L30,45" stroke="#111" stroke-width="2" fill="none"/>
+        <path d="M205,195 L55,80" stroke="#111" stroke-width="1.5" fill="none"/>
+        <path d="M205,195 L90,120" stroke="#111" stroke-width="1.5" fill="none"/>
+        <path d="M205,195 L140,155" stroke="#111" stroke-width="1" fill="none"/>
+        <!-- Claw tips -->
+        <path d="M20,60 C14,52 8,48 4,42 C8,40 15,44 20,50Z" fill="#0a0a0a"/>
+        <path d="M55,55 C50,47 44,44 40,38 C44,36 51,40 56,46Z" fill="#0a0a0a"/>
+        <path d="M90,25 C88,17 92,10 97,8 C100,14 98,20 95,26Z" fill="#0a0a0a"/>
+      </g>
+
+      <!-- ── RIGHT WING (mirrors, unfurls outward) ── -->
+      <g id="wingRight" style="transform-origin:315px 195px;transform:rotate(-40deg) scaleX(0.1);opacity:0;">
+        <path d="M315,195 C360,180 440,120 500,60 C510,50 515,35 505,30 C495,25 480,35 465,55 C430,100 390,140 345,165 C335,170 320,180 315,195Z" fill="#0d0d0d" stroke="#1a1a1a" stroke-width="1"/>
+        <path d="M315,195 L490,45" stroke="#111" stroke-width="2" fill="none"/>
+        <path d="M315,195 L465,80" stroke="#111" stroke-width="1.5" fill="none"/>
+        <path d="M315,195 L430,120" stroke="#111" stroke-width="1.5" fill="none"/>
+        <path d="M315,195 L380,155" stroke="#111" stroke-width="1" fill="none"/>
+        <path d="M500,60 C506,52 512,48 516,42 C512,40 505,44 500,50Z" fill="#0a0a0a"/>
+        <path d="M465,55 C470,47 476,44 480,38 C476,36 469,40 464,46Z" fill="#0a0a0a"/>
+        <path d="M430,25 C432,17 428,10 423,8 C420,14 422,20 425,26Z" fill="#0a0a0a"/>
+      </g>
+
+      <!-- ── BODY ── -->
+      <g id="dragonBody">
+        <!-- Tail curling below -->
+        <path d="M240,340 C220,360 200,375 215,390 C228,402 245,390 250,375 C255,360 248,345 260,335" fill="none" stroke="#0d0d0d" stroke-width="18" stroke-linecap="round"/>
+        <path d="M240,340 C220,360 200,375 215,390 C228,402 245,390 250,375 C255,360 248,345 260,335" fill="none" stroke="#050505" stroke-width="12" stroke-linecap="round"/>
+
+        <!-- Main torso -->
+        <path d="M200,320 C195,280 200,240 210,210 C220,180 230,170 260,168 C290,170 300,180 310,210 C320,240 325,280 320,320 C305,330 280,336 260,336 C240,336 215,330 200,320Z" fill="url(#bodyGrad)" stroke="#111" stroke-width="1"/>
+        <!-- Chest scales -->
+        <path d="M240,200 C248,195 260,194 272,200 C268,210 260,214 252,210Z" fill="#111"/>
+        <path d="M235,220 C245,215 260,214 275,220 C270,232 260,236 250,232Z" fill="#111"/>
+        <path d="M232,242 C243,237 260,236 278,242 C272,255 260,259 248,255Z" fill="#111"/>
+
+        <!-- Neck -->
+        <path d="M238,170 C235,150 238,130 245,115 C250,105 258,100 265,105 C272,110 276,125 278,140 C280,155 278,165 275,170Z" fill="url(#bodyGrad)" stroke="#111" stroke-width="1"/>
+
+        <!-- Head -->
+        <path d="M240,115 C235,95 238,75 248,62 C254,53 262,50 268,53 C278,58 282,72 280,88 C278,102 272,112 265,118 C258,122 244,120 240,115Z" fill="#0d0d0d" stroke="#111" stroke-width="1"/>
+
+        <!-- Snout / jaw -->
+        <path d="M248,88 C244,96 242,105 244,112 C250,116 256,115 260,112 C264,110 268,104 270,96 C266,90 258,86 250,88Z" fill="#080808"/>
+
+        <!-- Snout horns -->
+        <path d="M250,62 C246,48 242,38 238,28 C244,26 250,34 254,48Z" fill="#0a0a0a" stroke="#111" stroke-width="0.5"/>
+        <path d="M268,60 C272,46 276,36 280,28 C274,24 268,32 266,46Z" fill="#0a0a0a" stroke="#111" stroke-width="0.5"/>
+
+        <!-- Back spine ridges -->
+        <path d="M260,168 C258,155 255,140 252,125" fill="none" stroke="#111" stroke-width="1"/>
+        <polygon points="258,155 256,148 264,150" fill="#111"/>
+        <polygon points="256,143 254,136 262,138" fill="#111"/>
+        <polygon points="254,131 252,124 260,126" fill="#111"/>
+
+        <!-- Claws at bottom -->
+        <path d="M210,325 C202,335 196,342 190,340 C188,334 194,328 202,326Z" fill="#080808"/>
+        <path d="M220,330 C214,341 210,349 204,348 C202,342 207,335 215,332Z" fill="#080808"/>
+        <path d="M310,325 C318,335 324,342 330,340 C332,334 326,328 318,326Z" fill="#080808"/>
+        <path d="M300,330 C306,341 310,349 316,348 C318,342 313,335 305,332Z" fill="#080808"/>
+      </g>
+
+      <!-- ── GLOWING RED EYES ── -->
+      <g id="dragonEyes" filter="url(#eyeglow)" style="opacity:0;">
+        <!-- Left eye -->
+        <ellipse cx="250" cy="82" rx="5" ry="4" fill="#cc0000"/>
+        <ellipse cx="250" cy="82" rx="3" ry="2.5" fill="#ff2200"/>
+        <ellipse cx="250" cy="82" rx="1.5" ry="2" fill="#ff6600"/>
+        <!-- Pupil slit -->
+        <rect x="249.5" y="79" width="1" height="6" rx="0.5" fill="#000"/>
+
+        <!-- Right eye -->
+        <ellipse cx="270" cy="82" rx="5" ry="4" fill="#cc0000"/>
+        <ellipse cx="270" cy="82" rx="3" ry="2.5" fill="#ff2200"/>
+        <ellipse cx="270" cy="82" rx="1.5" ry="2" fill="#ff6600"/>
+        <rect x="269.5" y="79" width="1" height="6" rx="0.5" fill="#000"/>
+
+        <!-- Eye glow halos -->
+        <ellipse cx="250" cy="82" rx="10" ry="8" fill="none" stroke="#cc0000" stroke-width="1" opacity="0.5"/>
+        <ellipse cx="270" cy="82" rx="10" ry="8" fill="none" stroke="#cc0000" stroke-width="1" opacity="0.5"/>
+      </g>
+
+      <!-- ── EMBER PARTICLES ── -->
+      <g id="embers" opacity="0">
+        <circle class="ember" cx="180" cy="300" r="2" fill="#cc0000"/>
+        <circle class="ember" cx="340" cy="280" r="1.5" fill="#ff4400"/>
+        <circle class="ember" cx="160" cy="250" r="1" fill="#ff2200"/>
+        <circle class="ember" cx="360" cy="320" r="2" fill="#cc0000"/>
+        <circle class="ember" cx="220" cy="380" r="1.5" fill="#ff6600"/>
+        <circle class="ember" cx="300" cy="370" r="1" fill="#cc0000"/>
+        <circle class="ember" cx="140" cy="200" r="2" fill="#ff2200"/>
+        <circle class="ember" cx="380" cy="210" r="1.5" fill="#ff4400"/>
+        <circle class="ember" cx="100" cy="160" r="1" fill="#cc0000"/>
+        <circle class="ember" cx="420" cy="150" r="2" fill="#ff2200"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Title text -->
+  <div id="splashTitle" style="
+    margin-top:2rem;opacity:0;transform:translateY(20px);
+    font-family:'Anton',sans-serif;font-size:clamp(1.4rem,5vw,2.2rem);
+    color:white;letter-spacing:0.15em;text-align:center;text-transform:uppercase;
+    text-shadow:0 0 30px rgba(204,0,0,0.6);
+  ">Dragon Badminton</div>
+  <div id="splashTagline" style="
+    margin-top:0.5rem;opacity:0;
+    font-family:'Roboto Condensed',sans-serif;font-size:0.75rem;
+    font-weight:700;letter-spacing:0.4em;color:#666;text-transform:uppercase;
+  ">Monthly Standings</div>
 </div>
 
 <div class="ticker"></div>
@@ -1727,56 +1848,117 @@ let state = {
 // SPLASH SCREEN
 // ============================================================
 function runSplash(callback) {
-  const splash = document.getElementById('splash');
-  const countEl = document.getElementById('splashCount');
-  const subEl = document.getElementById('splashSub');
-  const overlay = document.getElementById('splashOverlay');
+  const splash   = document.getElementById('splash');
+  const fogA     = document.getElementById('fogA');
+  const fogB     = document.getElementById('fogB');
+  const wrap     = document.getElementById('dragonWrap');
+  const eyes     = document.getElementById('dragonEyes');
+  const embers   = document.getElementById('embers');
+  const wingL    = document.getElementById('wingLeft');
+  const wingR    = document.getElementById('wingRight');
+  const title    = document.getElementById('splashTitle');
+  const tagline  = document.getElementById('splashTagline');
 
-  const counts = ['3', '2', '1', 'PLAY!'];
-  let i = 0;
-
-  function showCount() {
-    if (i >= counts.length) {
-      // Red flash then fade out
-      overlay.style.transition = 'opacity 0.15s';
-      overlay.style.opacity = '1';
-      setTimeout(() => {
-        overlay.style.transition = 'opacity 0.4s';
-        overlay.style.opacity = '0';
-        splash.style.transition = 'opacity 0.5s';
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.style.display = 'none';
-          callback();
-        }, 500);
-      }, 150);
-      return;
-    }
-
-    const isPlay = counts[i] === 'PLAY!';
-    countEl.style.transition = 'none';
-    countEl.style.opacity = '0';
-    countEl.style.transform = isPlay ? 'scale(0.7)' : 'scale(1.5)';
-    countEl.style.color = isPlay ? 'var(--espn-red)' : 'white';
-    countEl.textContent = counts[i];
-
-    subEl.style.opacity = i === 0 ? '1' : subEl.style.opacity;
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        countEl.style.transition = 'opacity 0.2s ease, transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275)';
-        countEl.style.opacity = '1';
-        countEl.style.transform = 'scale(1)';
-        subEl.style.transition = 'opacity 0.4s';
-        subEl.style.opacity = '1';
-      });
-    });
-
-    i++;
-    setTimeout(showCount, isPlay ? 600 : 700);
+  function ease(el, props, duration, delay=0) {
+    setTimeout(() => {
+      el.style.transition = `all ${duration}ms cubic-bezier(0.25,0.46,0.45,0.94)`;
+      Object.assign(el.style, props);
+    }, delay);
   }
 
-  showCount();
+  function easeSpring(el, props, duration, delay=0) {
+    setTimeout(() => {
+      el.style.transition = `all ${duration}ms cubic-bezier(0.175,0.885,0.32,1.275)`;
+      Object.assign(el.style, props);
+    }, delay);
+  }
+
+  // ── 0ms: Fog begins seeping in ──
+  ease(fogA, { opacity:'1', transform:'scale(1)' }, 1800, 0);
+  ease(fogB, { opacity:'1', transform:'scale(1)' }, 2200, 200);
+
+  // ── 800ms: Dragon silhouette materialises ──
+  easeSpring(wrap, { opacity:'1', transform:'scale(1) translateY(0)' }, 1800, 800);
+
+  // ── 1500ms: Wings begin slow unfurl ──
+  setTimeout(() => {
+    wingL.style.transition = 'all 2200ms cubic-bezier(0.25,0.1,0.25,1)';
+    wingL.style.transform  = 'rotate(0deg) scaleX(1)';
+    wingL.style.opacity    = '1';
+  }, 1500);
+  setTimeout(() => {
+    wingR.style.transition = 'all 2200ms cubic-bezier(0.25,0.1,0.25,1)';
+    wingR.style.transform  = 'rotate(0deg) scaleX(1)';
+    wingR.style.opacity    = '1';
+  }, 1500);
+
+  // ── 2800ms: Eyes ignite ──
+  setTimeout(() => {
+    eyes.style.transition = 'opacity 0.3s ease';
+    eyes.style.opacity    = '0';
+    // Flicker on
+    let flickers = 0;
+    const flicker = setInterval(() => {
+      eyes.style.opacity = flickers % 2 === 0 ? '1' : '0.2';
+      flickers++;
+      if (flickers > 5) {
+        clearInterval(flicker);
+        eyes.style.transition = 'opacity 0.4s ease';
+        eyes.style.opacity = '1';
+      }
+    }, 80);
+  }, 2800);
+
+  // ── 3200ms: Embers drift up ──
+  setTimeout(() => {
+    embers.style.transition = 'opacity 0.5s ease';
+    embers.style.opacity    = '1';
+    // Animate individual embers
+    document.querySelectorAll('.ember').forEach((e, i) => {
+      const delay = i * 120;
+      const drift = (Math.random() - 0.5) * 60;
+      const rise  = 80 + Math.random() * 120;
+      setTimeout(() => {
+        e.style.transition = `transform ${1200 + i*150}ms ease-out, opacity ${800}ms ease-out`;
+        e.style.transform  = `translate(${drift}px, -${rise}px)`;
+        e.style.opacity    = '0';
+      }, delay);
+    });
+  }, 3200);
+
+  // ── 4200ms: Title slams in ──
+  setTimeout(() => {
+    title.style.transition   = 'opacity 0.4s ease, transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275)';
+    title.style.opacity      = '1';
+    title.style.transform    = 'translateY(0)';
+  }, 4200);
+
+  setTimeout(() => {
+    tagline.style.transition = 'opacity 0.6s ease';
+    tagline.style.opacity    = '1';
+  }, 4800);
+
+  // ── 5800ms: Dragon pulses once — deep breath ──
+  setTimeout(() => {
+    wrap.style.transition  = 'transform 0.4s ease-in';
+    wrap.style.transform   = 'scale(1.04)';
+    fogA.style.transition  = 'all 0.4s ease-in';
+    fogA.style.opacity     = '0.7';
+  }, 5800);
+  setTimeout(() => {
+    wrap.style.transition  = 'transform 0.6s ease-out';
+    wrap.style.transform   = 'scale(1)';
+  }, 6200);
+
+  // ── 6500ms: Fade out everything ──
+  setTimeout(() => {
+    splash.style.transition = 'opacity 0.7s ease-in';
+    splash.style.opacity    = '0';
+    setTimeout(() => {
+      splash.style.display = 'none';
+      callback();
+    }, 700);
+  }, 6500);
 }
 
 // ============================================================
